@@ -9,8 +9,9 @@ import (
 func main() {
 	obj := New()
 
-	id := clock.New("ts_seed")
-	deps := []clock.Timestamp{}
+	id := clock.New([]byte("client1"))
+	log.Println(id.String())
+	deps := []clock.Clock{}
 	cursor := []interface{}{"root", "level_A", "level_AB", 1}
 	mut := operation.NewMutation("key_1", "value")
 
