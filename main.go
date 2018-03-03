@@ -9,11 +9,12 @@ import (
 func main() {
 	obj := New()
 
-	id := clock.New([]byte("client1"))
-	log.Println(id.String())
+	clk := clock.New([]byte("a8fdc205a9f19cc1c7507a60c4f01b13d11d7fd0"))
 	deps := []clock.Clock{}
+
 	cursor := []interface{}{"root", "level_A", "level_AB", 1}
 	mut := operation.NewMutation("key_1", "value")
+	id := clk.Timestamp()
 
 	op := operation.New(id, deps, cursor, mut)
 	obj.AddLocalOperation(op)

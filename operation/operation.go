@@ -5,13 +5,13 @@ import (
 )
 
 type Operation struct {
-	id       clock.Clock
+	id       string
 	deps     []clock.Clock
 	cursor   []interface{}
 	mutation Mutation
 }
 
-func New(id clock.Clock, deps []clock.Clock, c []interface{}, m Mutation) *Operation {
+func New(id string, deps []clock.Clock, c []interface{}, m Mutation) *Operation {
 	return &Operation{
 		id:       id,
 		deps:     deps,
