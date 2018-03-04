@@ -4,13 +4,28 @@ import (
 	"github.com/gpestana/crdt-json/clock"
 )
 
+const (
+	Insert = iota
+	Delete
+	Assign
+)
+
 type Operation struct {
-	id       string
-	deps     []clock.Clock
-	cursor   []interface{}
+	// Lamport timestamp (implemented in clock.Clock) which uniquely identifies
+	// the operation
+	id string
+	// Set of casual dependencies of the operation (all operations that
+	// happened before the current operation)
+	deps []clock.Clock
+	// Ambiguously identifies the position in the JSON object to apply the
+	// operation by describing a path from the root of the document tree to some
+	// branch or leaf node
+	cursor []interface{}
+	// Mutation requested at the specific operation's position
 	mutation Mutation
 }
 
+// Returns new Operation object
 func New(id string, deps []clock.Clock, c []interface{}, m Mutation) *Operation {
 	return &Operation{
 		id:       id,
@@ -21,10 +36,13 @@ func New(id string, deps []clock.Clock, c []interface{}, m Mutation) *Operation 
 }
 
 type Mutation struct {
-	key   interface{}
+	// Type of the mutation typ := {insert(v), delete, assign(v)}
+	typ int
+	// Value of the mutation; Value can be {string, int, list, obj}
 	value interface{}
 }
 
-func NewMutation(k interface{}, v interface{}) Mutation {
-	return Mutation{k, v}
+// Returns new Mutation
+func NewMutation(t int, v interface{}) Mutation {
+	return Mutation{t, v}
 }

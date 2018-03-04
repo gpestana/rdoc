@@ -7,16 +7,19 @@ import (
 
 type JSON struct {
 	Head types.CRDT
-	// user buffered channels instead
-	rcvBuffer  []*operation.Operation
+
+	// Queue of operations to be applied locally
+	opBuffer []*operation.Operation
+	// Queue of received remote operations to be applied (if not yet)
+	rcvBuffer []*operation.Operation
+	// Queue of operations applied locally and ready to propagate over the network
 	sendBuffer []*operation.Operation
-	opBuffer   []*operation.Operation
-	// current local state (type representation?)
-	state []byte
 }
 
 func New() *JSON {
-	// start one go routine per buffer when bufferd chans are used
+	// TODO:
+	// Start one go routine per buffer when bufferd chans are used
+	// Or expect this to happen in the upper layer?
 	rcvBuf := []*operation.Operation{}
 	sendBuf := []*operation.Operation{}
 	return &JSON{

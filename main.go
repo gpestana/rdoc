@@ -13,8 +13,8 @@ func main() {
 	deps := []clock.Clock{}
 
 	cursor := []interface{}{"root", "level_A", "level_AB", 1}
-	mut := operation.NewMutation("key_1", "value")
 	id := clk.Timestamp()
+	mut := operation.NewMutation(operation.Insert, "val")
 
 	op := operation.New(id, deps, cursor, mut)
 	obj.AddLocalOperation(op)
