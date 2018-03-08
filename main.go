@@ -7,13 +7,13 @@ import (
 )
 
 func main() {
-	obj := New()
+	uid := "a8fdc205a9f19cc1c7507a60c4f01b13d11d7fd0"
+	obj := New(uid)
 
-	clk := clock.New([]byte("a8fdc205a9f19cc1c7507a60c4f01b13d11d7fd0"))
 	deps := []clock.Clock{}
 
 	cursor := []interface{}{"root", "level_A", "level_AB", 1}
-	id := clk.Timestamp()
+	id := obj.Clock.Timestamp()
 	mut := operation.NewMutation(operation.Insert, "val")
 
 	op := operation.New(id, deps, cursor, mut)

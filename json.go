@@ -1,12 +1,16 @@
 package main
 
 import (
+	"fmt"
+	"github.com/gpestana/crdt-json/clock"
 	"github.com/gpestana/crdt-json/operation"
 	"github.com/gpestana/crdt-json/types"
 )
 
 type JSON struct {
-	Head types.CRDT
+	// A valid JSON can by a map, list or register
+	Head  types.CRDT
+	Clock clock.Clock
 
 	// Queue of operations to be applied locally
 	opBuffer []*operation.Operation
@@ -16,13 +20,15 @@ type JSON struct {
 	sendBuffer []*operation.Operation
 }
 
-func New() *JSON {
-	// TODO:
-	// Start one go routine per buffer when bufferd chans are used
-	// Or expect this to happen in the upper layer?
+// Returns a new CRDT JSON data structure. It receives an ID which must be
+// unique in the context of the network.
+func New(uid string) *JSON {
+	clk := clock.New([]byte(uid))
 	rcvBuf := []*operation.Operation{}
 	sendBuf := []*operation.Operation{}
 	return &JSON{
+		Head:       m,
+		Clock:      clk,
 		rcvBuffer:  rcvBuf,
 		sendBuffer: sendBuf,
 	}

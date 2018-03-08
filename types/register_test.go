@@ -7,9 +7,9 @@ import (
 
 func TestStringer(t *testing.T) {
 	r := Register{}
-	r.setValue(1)
-	r.setValue("two")
-	r.setValue(3)
+	r.Set(1)
+	r.Set("two")
+	r.Set(3)
 	str := r.String()
 	expStr := "<int:1>, <string:two>, <int:3>"
 
