@@ -4,6 +4,7 @@ build:
 	go build .
 
 test: 
+	go tool vet .
 	go test ./... -cover
 
 run-manual:

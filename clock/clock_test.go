@@ -12,10 +12,10 @@ func TestConstructor(t *testing.T) {
 	seedHash := int64(187368093)
 
 	if clk.count != 1 {
-		t.Error("Constructor: Clock should be initialized with count=%v", initialCount)
+		t.Error(fmt.Sprintf("Constructor: Clock should be initialized with count=%v", initialCount))
 	}
 	if clk.seed != seedHash {
-		t.Error("Constructor: Clock should be initialized with seed=%v", seedHash)
+		t.Error(fmt.Sprintf("Constructor: Clock should be initialized with seed=%v", seedHash))
 	}
 }
 
