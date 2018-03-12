@@ -4,4 +4,4 @@
 
 Conflict-free replicated JSON implementation in Go based on 
 [Martin Kleppmann, Alastair R. Beresford
-work.](https://arxiv.org/abs/1608.03960).
+work](https://arxiv.org/abs/1608.03960).
