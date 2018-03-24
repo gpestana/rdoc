@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/gpestana/crdt-json/clock"
 	"github.com/gpestana/crdt-json/operation"
 	"github.com/gpestana/crdt-json/types"
@@ -23,11 +23,12 @@ type JSON struct {
 // Returns a new CRDT JSON data structure. It receives an ID which must be
 // unique in the context of the network.
 func New(uid string) *JSON {
+	m := types.NewEmptyMap()
 	clk := clock.New([]byte(uid))
 	rcvBuf := []*operation.Operation{}
 	sendBuf := []*operation.Operation{}
 	return &JSON{
-		Head:       m,
+		Head:       *m,
 		Clock:      clk,
 		rcvBuffer:  rcvBuf,
 		sendBuffer: sendBuf,
@@ -41,5 +42,10 @@ func (j *JSON) AddLocalOperation(op *operation.Operation) {
 // CRDT JSON can be marshaled into a valid JSON encoding for application
 // consumption
 func (j JSON) MarshalJSON() ([]byte, error) {
-	return []byte{}, nil
+	b := []byte{}
+	b, err := json.Marshal(j.Head)
+	if err != nil {
+		return b, err
+	}
+	return b, nil
 }

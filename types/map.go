@@ -15,6 +15,14 @@ func NewEmptyMap() *Map {
 	return &Map{}
 }
 
+// Adds an operation id to the set pres(k). The set pres(k), is the set of all
+//operations that have asserted the existence of the map.
+func (m Map) AddOpPresence(opId string) {}
+
+// Removes an operation id from the set pres(k). The set pres(k), is the set of
+//all operations that have asserted the existence of the map.
+func (m Map) RmOpPresence(opId string) {}
+
 // Get a node value from input key. If the key does not exist in the map,
 // creates a new KV in which key is the input passed and value is empty
 func (m *Map) Get(key string) Node {
@@ -49,6 +57,9 @@ func (m *Map) Values() []Node {
 	return vals
 }
 
+// TODO: Deletes the whole Map<T>
+func (m Map) Delete() {}
+
 // TODO: Deletes a KV
 func (m *Map) DeleteKey() {}
 
@@ -71,4 +82,8 @@ type KV struct {
 
 func (kv KV) String() string {
 	return fmt.Sprintf("{%v:%v}", kv.Key, kv.Value)
+}
+
+func (kv KV) MarshalJSON() ([]byte, error) {
+	return []byte{}, nil
 }
