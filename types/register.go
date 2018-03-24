@@ -14,8 +14,12 @@ type Register struct {
 
 // Sets new value to Register. Setting values in Registers is a one value
 // operation, although reading from them may return more than one value
-func (r *Register) setValue(v interface{}) {
+func (r *Register) Set(v interface{}) {
 	r.Values = append(r.Values, v)
+}
+
+func (r *Register) Get() []interface{} {
+	return r.Values
 }
 
 // Returns string representation of type Register
