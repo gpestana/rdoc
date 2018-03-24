@@ -5,6 +5,10 @@ import (
 )
 
 type CRDT interface {
+	//InsertAfter(Node) // only for list
+	//Delete()
+
+	// Adds/remove presence ids
 	AddOpPresence(string)
 	RmOpPresence(string)
 	// Data type needs to be unmarshalled into string
