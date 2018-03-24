@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -60,6 +61,16 @@ func (m *Map) Values() []Node {
 // TODO: Deletes the whole Map<T>
 func (m Map) Delete() {}
 
+func (m Map) MarshalJSON() ([]byte, error) {
+	repr := map[string]Node{}
+	for _, kv := range m.KV {
+		k, v := kv.getKV()
+		repr[k] = v
+	}
+	b, err := json.Marshal(repr)
+	return b, err
+}
+
 // TODO: Deletes a KV
 func (m *Map) DeleteKey() {}
 
@@ -80,10 +91,15 @@ type KV struct {
 	Value Node
 }
 
+func (kv KV) getKV() (string, Node) {
+	return kv.Key, kv.Value
+}
+
 func (kv KV) String() string {
 	return fmt.Sprintf("{%v:%v}", kv.Key, kv.Value)
 }
 
 func (kv KV) MarshalJSON() ([]byte, error) {
+	fmt.Println("KV.MarshalJSON called")
 	return []byte{}, nil
 }

@@ -3,13 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gpestana/crdt-json/types"
 	"testing"
 )
 
 func TestMarshalEmpty(t *testing.T) {
 	jobj := New("clock1")
-	expEncStr := "{}"
-	expBytes, err := json.Marshal(expEncStr)
+	expBytes, err := json.Marshal(map[string]types.Node{})
 	if err != nil {
 		t.Fatal(err)
 	}
