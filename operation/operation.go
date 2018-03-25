@@ -1,3 +1,8 @@
+// Implements CRDT operations.
+// Everytime the state of the JSON document changes, an operations that
+// describes the mutation is generated. The operation is kept for conflict
+// resolution. The document state is the set of all operations ran against
+// itself.
 package operation
 
 import (
@@ -12,7 +17,7 @@ const (
 
 type Operation struct {
 	// Lamport timestamp (implemented in clock.Clock) which uniquely identifies
-	// the operation
+	// the operation in the network
 	id string
 	// Set of casual dependencies of the operation (all operations that
 	// happened before the current operation)

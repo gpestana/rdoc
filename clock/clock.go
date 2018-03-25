@@ -1,3 +1,7 @@
+// Lamport timestamp implementation. Every operation has an unique ID in the
+// network. Lamport timestamps ensure that if two operarations in different
+// network nodes have occurred concurrently, their order is arbitrary but
+// deterministic
 package clock
 
 import (
