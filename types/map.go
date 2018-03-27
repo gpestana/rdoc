@@ -50,6 +50,9 @@ func (m *Map) Values() []Node {
 	return vals
 }
 
+func (m Map) AddOpPresence(id string) {}
+func (m Map) RmOpPresence(id string)  {}
+
 func (m Map) MarshalJSON() ([]byte, error) {
 	repr := map[string]Node{}
 	for _, kv := range m.KV {

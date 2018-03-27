@@ -34,4 +34,4 @@ func (n *Node) RmOpPresence(oid string) {
 	log.Println("Rm op presence")
 }
 
-func (n *Node) Delete() {}
+func (n Node) Delete() {}
