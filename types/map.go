@@ -12,13 +12,13 @@ type Map struct {
 }
 
 // Returns a new empty Map<T>
-func NewEmptyMap() *Map {
+func NewMap() *Map {
 	return &Map{}
 }
 
 // Get a node value from input key. If the key does not exist in the map,
 // creates a new KV in which key is the input passed and value is empty
-func (m *Map) Get(key string) Node {
+func (m *Map) Get(key string) CRDT {
 	for _, kv := range m.KV {
 		if kv.Key == key {
 			return kv.Value
@@ -42,8 +42,8 @@ func (m *Map) Keys() []string {
 }
 
 // Gets all values from Map<T>
-func (m *Map) Values() []Node {
-	vals := []Node{}
+func (m *Map) Values() []CRDT {
+	vals := []CRDT{}
 	for _, kv := range m.KV {
 		vals = append(vals, kv.Value)
 	}
@@ -54,7 +54,7 @@ func (m Map) AddOpPresence(id string) {}
 func (m Map) RmOpPresence(id string)  {}
 
 func (m Map) MarshalJSON() ([]byte, error) {
-	repr := map[string]Node{}
+	repr := map[string]CRDT{}
 	for _, kv := range m.KV {
 		k, v := kv.getKV()
 		repr[k] = v
@@ -77,10 +77,10 @@ func (m Map) String() string {
 
 type KV struct {
 	Key   string
-	Value Node
+	Value CRDT
 }
 
-func (kv KV) getKV() (string, Node) {
+func (kv KV) getKV() (string, CRDT) {
 	return kv.Key, kv.Value
 }
 

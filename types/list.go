@@ -15,10 +15,15 @@ type List struct {
 	linkedList *LinkedList
 }
 
-func NewListEmpty() *List {
+func NewList() *List {
 	ll := LinkedList{}
 	return &List{linkedList: &ll}
 }
+
+//TODO
+func (l List) Delete()              {}
+func (l List) AddOpPresence(string) {}
+func (l List) RmOpPresence(string)  {}
 
 func (l *List) Length() int {
 	len := 0
@@ -103,6 +108,11 @@ func (l *List) DeleteElement(index int) error {
 	}
 
 	return nil
+}
+
+//TODO
+func (l List) String() string {
+	return ""
 }
 
 type LinkedList struct {

@@ -23,7 +23,7 @@ type JSON struct {
 // Returns a new CRDT JSON data structure. It receives an ID which must be
 // unique in the context of the network.
 func New(uid string) *JSON {
-	m := types.NewEmptyMap()
+	m := types.NewMap()
 	clk := clock.New([]byte(uid))
 	rcvBuf := []*operation.Operation{}
 	sendBuf := []*operation.Operation{}

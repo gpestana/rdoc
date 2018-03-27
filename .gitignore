@@ -1,4 +1,5 @@
 crdt-json
+.notes/ 
 
 # Binaries for programs and plugins
 *.exe

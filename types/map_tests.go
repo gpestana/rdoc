@@ -5,7 +5,7 @@ import (
 )
 
 func TestNewEmptyMap(t *testing.T) {
-	m := NewEmptyMap()
+	m := NewMap()
 	if len(m.KV) != 0 {
 		t.Error("Map: New empty map should be empty")
 	}

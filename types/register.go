@@ -12,6 +12,10 @@ type Register struct {
 	Values []interface{}
 }
 
+func NewRegister() *Register {
+	return &Register{}
+}
+
 // Sets new value to Register. Setting values in Registers is a one value
 // operation, although reading from them may return more than one value
 func (r *Register) Set(v interface{}) {
@@ -21,6 +25,11 @@ func (r *Register) Set(v interface{}) {
 func (r *Register) Get() []interface{} {
 	return r.Values
 }
+
+//TODO
+func (r Register) Delete()              {}
+func (r Register) AddOpPresence(string) {}
+func (r Register) RmOpPresence(string)  {}
 
 // Returns string representation of type Register
 func (r Register) String() string {

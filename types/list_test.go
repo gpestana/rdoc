@@ -6,7 +6,7 @@ import (
 )
 
 func TestNewEmptyList(t *testing.T) {
-	l := NewListEmpty()
+	l := NewList()
 	expLength := 0
 	length := l.Length()
 	if expLength != length {
@@ -15,9 +15,9 @@ func TestNewEmptyList(t *testing.T) {
 }
 
 func TestAddElement(t *testing.T) {
-	l := NewListEmpty()
-	m := NewEmptyMap()
-	m2 := NewEmptyMap()
+	l := NewList()
+	m := NewMap()
+	m2 := NewMap()
 	l.AddElement(0, *m)
 	l.AddElement(1, *m2)
 
@@ -27,7 +27,7 @@ func TestAddElement(t *testing.T) {
 		t.Error(fmt.Sprintf("New list expected to have %d lenght, had %d", expLength, length))
 	}
 
-	m3 := NewEmptyMap()
+	m3 := NewMap()
 	l.AddElement(0, *m3)
 	expLength = 3
 
@@ -38,9 +38,9 @@ func TestAddElement(t *testing.T) {
 }
 
 func TestAddElementOutOfBound(t *testing.T) {
-	l := NewListEmpty()
-	m := NewEmptyMap()
-	m2 := NewEmptyMap()
+	l := NewList()
+	m := NewMap()
+	m2 := NewMap()
 	l.AddElement(0, *m)
 	err := l.AddElement(3, *m2)
 	if err == nil {
@@ -49,9 +49,9 @@ func TestAddElementOutOfBound(t *testing.T) {
 }
 
 func TestDeleteHead(t *testing.T) {
-	l := NewListEmpty()
-	m := NewEmptyMap()
-	m2 := NewEmptyMap()
+	l := NewList()
+	m := NewMap()
+	m2 := NewMap()
 	l.AddElement(0, *m)
 	l.AddElement(1, *m2)
 
@@ -65,9 +65,9 @@ func TestDeleteHead(t *testing.T) {
 }
 
 func TestDeleteElement(t *testing.T) {
-	l := NewListEmpty()
-	m := NewEmptyMap()
-	m2 := NewEmptyMap()
+	l := NewList()
+	m := NewMap()
+	m2 := NewMap()
 	l.AddElement(0, *m)
 	l.AddElement(1, *m2)
 
@@ -81,9 +81,9 @@ func TestDeleteElement(t *testing.T) {
 }
 
 func TestDeleteElementOutOfBound(t *testing.T) {
-	l := NewListEmpty()
-	m := NewEmptyMap()
-	m2 := NewEmptyMap()
+	l := NewList()
+	m := NewMap()
+	m2 := NewMap()
 	l.AddElement(0, *m)
 	l.AddElement(1, *m2)
 	err := l.DeleteElement(4)
