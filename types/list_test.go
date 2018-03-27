@@ -46,5 +46,49 @@ func TestAddElementOutOfBound(t *testing.T) {
 	if err == nil {
 		t.Error("Error out of bound expected")
 	}
+}
 
+func TestDeleteHead(t *testing.T) {
+	l := NewListEmpty()
+	m := NewEmptyMap()
+	m2 := NewEmptyMap()
+	l.AddElement(0, *m)
+	l.AddElement(1, *m2)
+
+	l.DeleteElement(0)
+	expLength := 1
+
+	length := l.Length()
+	if expLength != length {
+		t.Error(fmt.Sprintf("List expected to have %d lenght, had %d", expLength, length))
+	}
+}
+
+func TestDeleteElement(t *testing.T) {
+	l := NewListEmpty()
+	m := NewEmptyMap()
+	m2 := NewEmptyMap()
+	l.AddElement(0, *m)
+	l.AddElement(1, *m2)
+
+	l.DeleteElement(1)
+	expLength := 1
+
+	length := l.Length()
+	if expLength != length {
+		t.Error(fmt.Sprintf("List expected to have %d lenght, had %d", expLength, length))
+	}
+}
+
+func TestDeleteElementOutOfBound(t *testing.T) {
+	l := NewListEmpty()
+	m := NewEmptyMap()
+	m2 := NewEmptyMap()
+	l.AddElement(0, *m)
+	l.AddElement(1, *m2)
+	err := l.DeleteElement(4)
+
+	if err == nil {
+		t.Error("Error out of bound expected")
+	}
 }

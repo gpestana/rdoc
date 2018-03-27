@@ -3,7 +3,6 @@ package types
 import (
 	"errors"
 	"fmt"
-	"log"
 )
 
 // A type list maintains a 2 way linked list data structure to store the data.
@@ -61,8 +60,6 @@ func (l *List) AddElement(index int, el CRDT) error {
 	}
 
 	nPtr := l.linkedList.Head
-	log.Println(l.linkedList.Head)
-
 	i := 0
 	for i < index-1 {
 		i++
@@ -79,7 +76,34 @@ func (l *List) AddElement(index int, el CRDT) error {
 }
 
 // Removes element from list (in a specific index)
-func (l *List) DeleteElement() {}
+func (l *List) DeleteElement(index int) error {
+	if l.Length() < index {
+		return errors.New(
+			fmt.Sprintf("Index cannot be larger than the length of the list, %d", l.Length()))
+	}
+
+	if index == 0 {
+		n := l.linkedList.Head.next
+		if n != nil {
+			l.linkedList.Head = n
+			n.previous = nil
+		}
+		return nil
+	}
+
+	n := l.linkedList.Head
+	for 0 < index {
+		n = n.next
+		index--
+	}
+
+	n.previous.next = n.next
+	if n.next != nil {
+		n.next.previous = n.previous
+	}
+
+	return nil
+}
 
 type LinkedList struct {
 	Head *LinkedListNode
