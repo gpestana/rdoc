@@ -6,6 +6,12 @@ import (
 	"log"
 )
 
+const (
+	MapT      = "MapT"
+	ListT     = "ListT"
+	RegisterT = "RegisterT"
+)
+
 type CRDT interface {
 	// Adds/remove presence ids
 	AddOpPresence(string)
