@@ -29,6 +29,10 @@ func New(seed []byte) Clock {
 	}
 }
 
+func (c *Clock) ID() string {
+	return strconv.FormatInt(c.seed, 10)
+}
+
 // Increments Clock count
 func (c *Clock) Tick() {
 	c.count++

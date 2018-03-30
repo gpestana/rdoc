@@ -13,11 +13,14 @@ func main() {
 	deps := []clock.Clock{}
 
 	cursor := []interface{}{"root", "level_A", "level_AB", 1}
-	id := obj.Clock.Timestamp()
 	mut := operation.NewMutation(operation.Insert, "val")
+	opId := obj.Clock.Timestamp()
+	op := operation.New(opId, deps, cursor, mut)
 
-	op := operation.New(id, deps, cursor, mut)
-	obj.AddLocalOperation(op)
+	err := obj.NewOperation(op)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	log.Println(obj)
 }

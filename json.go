@@ -5,6 +5,7 @@ import (
 	"github.com/gpestana/crdt-json/clock"
 	"github.com/gpestana/crdt-json/operation"
 	"github.com/gpestana/crdt-json/types"
+	"log"
 )
 
 type JSON struct {
@@ -12,12 +13,8 @@ type JSON struct {
 	Head  types.CRDT
 	Clock clock.Clock
 
-	// Queue of operations to be applied locally
-	opBuffer []*operation.Operation
-	// Queue of received remote operations to be applied (if not yet)
-	rcvBuffer []*operation.Operation
-	// Queue of operations applied locally and ready to propagate over the network
-	sendBuffer []*operation.Operation
+	// Channel in which operation to be broadcast remotely are buffered
+	BroadcastBuffer chan *operation.Operation
 }
 
 // Returns a new CRDT JSON data structure. It receives an ID which must be
@@ -25,18 +22,31 @@ type JSON struct {
 func New(uid string) *JSON {
 	m := types.NewMap()
 	clk := clock.New([]byte(uid))
-	rcvBuf := []*operation.Operation{}
-	sendBuf := []*operation.Operation{}
+
 	return &JSON{
-		Head:       *m,
-		Clock:      clk,
-		rcvBuffer:  rcvBuf,
-		sendBuffer: sendBuf,
+		Head:            *m,
+		Clock:           clk,
+		BroadcastBuffer: make(chan *operation.Operation),
 	}
 }
 
-func (j *JSON) AddLocalOperation(op *operation.Operation) {
-	j.opBuffer = append(j.opBuffer, op)
+// Checks whether operation to process is local or remote and calls the correct
+// operation handler.
+func (j *JSON) NewOperation(op *operation.Operation) error {
+	if op.NodeID() == j.Clock.ID() {
+		handleLocalOperation(op)
+	} else {
+		handleRemoteOperation(op)
+	}
+	return nil
+}
+
+func handleLocalOperation(op *operation.Operation) {
+	log.Println("AddLocalOperation")
+}
+
+func handleRemoteOperation(op *operation.Operation) {
+	log.Println("AddRemoteOperation")
 }
 
 // CRDT JSON can be marshaled into a valid JSON encoding for application
@@ -48,4 +58,19 @@ func (j JSON) MarshalJSON() ([]byte, error) {
 		return b, err
 	}
 	return b, nil
+}
+
+// Handler for operations ready to be applied locally
+func (j JSON) handleLocalOp(op *operation.Operation) {
+	log.Println("Handle local operation")
+}
+
+// Handler for operations ready to be broacast to remote nodes
+func (j JSON) handleSendOp(op *operation.Operation) {
+	log.Println("Handle receive operation")
+}
+
+// Handler for operations received from remote nodes
+func (j JSON) handleRcvOp(op *operation.Operation) {
+	log.Println("Handle receive operation")
 }

@@ -7,6 +7,7 @@ package operation
 
 import (
 	"github.com/gpestana/crdt-json/clock"
+	"strings"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 type Operation struct {
 	// Lamport timestamp (implemented in clock.Clock) which uniquely identifies
 	// the operation in the network
-	id string
+	ID string
 	// Set of casual dependencies of the operation (all operations that
 	// happened before the current operation)
 	deps []clock.Clock
@@ -33,11 +34,18 @@ type Operation struct {
 // Returns new Operation object
 func New(id string, deps []clock.Clock, c []interface{}, m Mutation) *Operation {
 	return &Operation{
-		id:       id,
+		ID:       id,
 		deps:     deps,
 		cursor:   c,
 		mutation: m,
 	}
+}
+
+// Returns ID of the node which generated the operation
+func (op Operation) NodeID() string {
+	splId := strings.Split(op.ID, ".")
+	seed := splId[1]
+	return seed
 }
 
 type Mutation struct {
