@@ -12,8 +12,7 @@ type JSON struct {
 	// A valid JSON can by a map, list or register
 	Head  types.CRDT
 	Clock clock.Clock
-
-	// Channel in which operation to be broadcast remotely are buffered
+	// Buffer for operation to be broadcast remotely
 	BroadcastBuffer chan *operation.Operation
 }
 

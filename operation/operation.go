@@ -26,19 +26,23 @@ type Operation struct {
 	// Ambiguously identifies the position in the JSON object to apply the
 	// operation by describing a path from the root of the document tree to some
 	// branch or leaf node
-	cursor []interface{}
+	cursor Cursor
 	// Mutation requested at the specific operation's position
 	mutation Mutation
 }
 
 // Returns new Operation object
-func New(id string, deps []clock.Clock, c []interface{}, m Mutation) *Operation {
+func New(id string, deps []clock.Clock, c []byte, m Mutation) (*Operation, error) {
+	cursor, err := newCursor(c)
+	if err != nil {
+		return &Operation{}, err
+	}
 	return &Operation{
 		ID:       id,
 		deps:     deps,
-		cursor:   c,
+		cursor:   cursor,
 		mutation: m,
-	}
+	}, nil
 }
 
 // Returns ID of the node which generated the operation
