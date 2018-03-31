@@ -6,11 +6,7 @@
 package operation
 
 import (
-	"errors"
-	"fmt"
 	"github.com/gpestana/crdt-json/clock"
-	"github.com/gpestana/crdt-json/types"
-	"reflect"
 	"strings"
 )
 
@@ -30,19 +26,23 @@ type Operation struct {
 	// Ambiguously identifies the position in the JSON object to apply the
 	// operation by describing a path from the root of the document tree to some
 	// branch or leaf node
-	cursor []interface{}
+	cursor Cursor
 	// Mutation requested at the specific operation's position
 	mutation Mutation
 }
 
 // Returns new Operation object
-func New(id string, deps []clock.Clock, c []interface{}, m Mutation) *Operation {
+func New(id string, deps []clock.Clock, c []byte, m Mutation) (*Operation, error) {
+	cursor, err := newCursor(c)
+	if err != nil {
+		return &Operation{}, err
+	}
 	return &Operation{
 		ID:       id,
 		deps:     deps,
-		cursor:   c,
+		cursor:   cursor,
 		mutation: m,
-	}
+	}, nil
 }
 
 // Returns ID of the node which generated the operation
@@ -50,57 +50,6 @@ func (op Operation) NodeID() string {
 	splId := strings.Split(op.ID, ".")
 	seed := splId[1]
 	return seed
-}
-
-// A cursor identifies unambiguous a position in the JSON document by describing
-// the path from the root until the leaf/node selected and the element ID
-type Cursor struct {
-	Keys []cursorKey
-	Id   string
-}
-
-type cursorKey struct {
-	Type  string
-	Value interface{}
-}
-
-func newCursorKey(t string, v interface{}) (cursorKey, error) {
-	if t != types.MapT || t != types.ListT || t != types.RegisterT {
-		return cursorKey{}, errors.New(
-			fmt.Sprintf("Type of path not valid; It should be one of {%v, %v, %v}",
-				types.MapT, types.ListT, types.RegisterT))
-	}
-
-	valT := reflect.TypeOf(v)
-	switch {
-	case valT.Kind() == reflect.Int:
-		if t != types.ListT {
-			return cursorKey{}, errors.New(
-				fmt.Sprintf("Cursor value type int is valid to cursor type ListT, got %v", t))
-		}
-
-	case valT.Kind() == reflect.String:
-		return cursorKey{}, errors.New(
-			fmt.Sprintf("Cursor value type string is valid to cursor type MapT, got %v", t))
-
-	default:
-		return cursorKey{}, errors.New("Cursor value type can be one of string or int")
-	}
-
-	return cursorKey{t, v}, nil
-}
-
-func (op Operation) NewCursor(path []map[string]interface{}, id string) (Cursor, error) {
-	c := Cursor{Keys: []cursorKey{}, Id: id}
-	for _, p := range path {
-		ck, err := newCursorKey(p["type"].(string), p["id"])
-		if err != nil {
-			return Cursor{}, err
-		}
-		c.Keys = append(c.Keys, ck)
-	}
-
-	return Cursor{}, nil
 }
 
 type Mutation struct {

@@ -12,12 +12,15 @@ func main() {
 
 	deps := []clock.Clock{}
 
-	cursor := []interface{}{"root", "level_A", "level_AB", 1}
+	cursor := []byte(`{"path": ["some", "list", 2, "aMap"], "id": 1}`)
 	mut := operation.NewMutation(operation.Insert, "val")
 	opId := obj.Clock.Timestamp()
-	op := operation.New(opId, deps, cursor, mut)
+	op, err := operation.New(opId, deps, cursor, mut)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	err := obj.NewOperation(op)
+	err = obj.NewOperation(op)
 	if err != nil {
 		log.Fatal(err)
 	}
