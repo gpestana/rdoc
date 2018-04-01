@@ -8,8 +8,11 @@ import (
 
 func TestNodeID(t *testing.T) {
 	nid := "123123123"
-	cursorStr := "{}"
-	op, _ := New("10."+nid, []clock.Clock{}, []byte(cursorStr), Mutation{})
+	cursorStr := `{"path":[],"id":"test"}`
+	op, err := New("10."+nid, []clock.Clock{}, []byte(cursorStr), Mutation{})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	actualNid := op.NodeID()
 	if actualNid != nid {

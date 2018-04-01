@@ -15,7 +15,7 @@ import (
 // cursor: {path: ["aList"], key: 0} ==> val2
 type Cursor struct {
 	Path []interface{} `json:"path"`
-	Id   int           `json:"id"`
+	Id   interface{}   `json:"id"`
 }
 
 func newCursor(c []byte) (Cursor, error) {
@@ -41,5 +41,14 @@ func (c *Cursor) validate() error {
 				fmt.Sprintf("Cursor path types can be Number or String, got a %T", t))
 		}
 	}
+
+	switch t := c.Id.(type) {
+	case float64:
+	case string:
+	default:
+		return errors.New(
+			fmt.Sprintf("Cursor Id types can be Number or String, got a %T", t))
+	}
+
 	return nil
 }
