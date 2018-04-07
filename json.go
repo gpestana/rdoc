@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gpestana/crdt-json/clock"
 	"github.com/gpestana/crdt-json/operation"
 	"github.com/gpestana/crdt-json/types"
@@ -33,18 +34,46 @@ func New(uid string) *JSON {
 // operation handler.
 func (j *JSON) NewOperation(op *operation.Operation) error {
 	if op.NodeID() == j.Clock.ID() {
-		handleLocalOperation(op)
+		j.handleLocalOperation(op)
 	} else {
-		handleRemoteOperation(op)
+		j.handleRemoteOperation(op)
 	}
 	return nil
 }
 
-func handleLocalOperation(op *operation.Operation) {
-	log.Println("AddLocalOperation")
+// Traverses the JSON document based on the operation cursor and applies the
+// mutation on the correct leaf/node. During the traversal, it also handles the
+// operation presence according to the mutation type
+func (j *JSON) apply(op *operation.Operation) error {
+	cpath := op.Cursor.Path
+	node := j.Head
+	for _, p := range cpath {
+		switch n := node.(type) {
+		case types.Map:
+			id := p.MapT
+			node = node.(types.Map).Get(id)
+			log.Println("MapT", id, n)
+		case types.List:
+			id := p.ListT
+			node = node.(types.List).Get(id)
+			log.Println("ListT", id, n)
+		case types.Register:
+			id := p.RegisterT
+			//err, node = node.(types.Register).Get(id)
+			log.Println("RegisterT", id, n)
+		}
+	}
+	return nil
 }
 
-func handleRemoteOperation(op *operation.Operation) {
+func (j JSON) handleLocalOperation(op *operation.Operation) {
+	err := j.apply(op)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("Error handling the operation, %v", err))
+	}
+}
+
+func (j JSON) handleRemoteOperation(op *operation.Operation) {
 	log.Println("AddRemoteOperation")
 }
 

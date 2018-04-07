@@ -20,7 +20,10 @@ func NewList() *List {
 	return &List{linkedList: &ll}
 }
 
-//TODO
+func (l List) Get(i int) CRDT {
+	crdt := l.GetElement(i)
+	return crdt
+}
 func (l List) Delete()              {}
 func (l List) AddOpPresence(string) {}
 func (l List) RmOpPresence(string)  {}
@@ -78,6 +81,11 @@ func (l *List) AddElement(index int, el CRDT) error {
 	}
 	nPtr.next = &n
 	return nil
+}
+
+// TODO: Gets element from list
+func (l List) GetElement(index int) CRDT {
+	return List{}
 }
 
 // Removes element from list (in a specific index)

@@ -26,7 +26,7 @@ type Operation struct {
 	// Ambiguously identifies the position in the JSON object to apply the
 	// operation by describing a path from the root of the document tree to some
 	// branch or leaf node
-	cursor Cursor
+	Cursor Cursor
 	// Mutation requested at the specific operation's position
 	mutation Mutation
 }
@@ -40,7 +40,7 @@ func New(id string, deps []clock.Clock, c []byte, m Mutation) (*Operation, error
 	return &Operation{
 		ID:       id,
 		deps:     deps,
-		cursor:   cursor,
+		Cursor:   cursor,
 		mutation: m,
 	}, nil
 }

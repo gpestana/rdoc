@@ -2,8 +2,6 @@ package operation
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	_ "github.com/gpestana/crdt-json/types"
 )
 
@@ -14,8 +12,14 @@ import (
 // cursor: {path: ["grosseries", "food"], key: 1} ==> onion
 // cursor: {path: ["aList"], key: 0} ==> val2
 type Cursor struct {
-	Path []interface{} `json:"path"`
-	Id   interface{}   `json:"id"`
+	Path []PathItem  `json:"path"`
+	Id   interface{} `json:"id"`
+}
+
+type PathItem struct {
+	MapT      string `json:"MapT"`
+	ListT     int    `json:"ListT"`
+	RegisterT string `json:"RegisterT"`
 }
 
 func newCursor(c []byte) (Cursor, error) {
@@ -32,23 +36,5 @@ func newCursor(c []byte) (Cursor, error) {
 }
 
 func (c *Cursor) validate() error {
-	for _, p := range c.Path {
-		switch t := p.(type) {
-		case float64:
-		case string:
-		default:
-			return errors.New(
-				fmt.Sprintf("Cursor path types can be Number or String, got a %T", t))
-		}
-	}
-
-	switch t := c.Id.(type) {
-	case float64:
-	case string:
-	default:
-		return errors.New(
-			fmt.Sprintf("Cursor Id types can be Number or String, got a %T", t))
-	}
-
 	return nil
 }

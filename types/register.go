@@ -22,8 +22,8 @@ func (r *Register) Set(v interface{}) {
 	r.Values = append(r.Values, v)
 }
 
-func (r *Register) Get() []interface{} {
-	return r.Values
+func (r *Register) Get() interface{} {
+	return nil
 }
 
 //TODO

@@ -16,9 +16,18 @@ func NewMap() *Map {
 	return &Map{}
 }
 
+// Adds a new empty entry to the Map
+func (m *Map) Add(key string) {
+	kv := KV{
+		Key:   key,
+		Value: nil,
+	}
+	m.KV = append(m.KV, kv)
+}
+
 // Get a node value from input key. If the key does not exist in the map,
 // creates a new KV in which key is the input passed and value is empty
-func (m *Map) Get(key string) CRDT {
+func (m Map) Get(key string) CRDT {
 	for _, kv := range m.KV {
 		if kv.Key == key {
 			return kv.Value
