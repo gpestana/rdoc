@@ -46,23 +46,57 @@ func (j *JSON) NewOperation(op *operation.Operation) error {
 // operation presence according to the mutation type
 func (j *JSON) apply(op *operation.Operation) error {
 	cpath := op.Cursor.Path
-	node := j.Head
-	for _, p := range cpath {
+
+	// Selects correct node to apply the operation mutation. If necessary, create
+	// the necesseary nodes so that the cursor can be traversable in the current
+	// document
+	err, node := traverse(j.Head, cpath)
+	if err != nil {
+		return err
+	}
+
+	// Apply operation mutation on the selected node
+	mut := op.Mutation
+	err = mutate(node, mut)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func traverse(node types.CRDT, path []operation.PathItem) (error, types.CRDT) {
+	for _, p := range path {
 		switch n := node.(type) {
+
 		case types.Map:
 			id := p.MapT
-			node = node.(types.Map).Get(id)
-			log.Println("MapT", id, n)
+			nextNode := node.(types.Map).Get(id)
+			log.Println("MapT", id, n, node)
+			if nextNode == nil {
+				// create new node, attach it to Map and assign it as node
+				continue
+			}
+
 		case types.List:
 			id := p.ListT
-			node = node.(types.List).Get(id)
-			log.Println("ListT", id, n)
+			nextNode := node.(types.List).Get(id)
+			log.Println("ListT", id, n, node)
+			if nextNode == nil {
+				// create new node, attach it to List and assign it as node
+				continue
+			}
 		case types.Register:
-			id := p.RegisterT
-			//err, node = node.(types.Register).Get(id)
-			log.Println("RegisterT", id, n)
+		default:
+			log.Println("Node does not exist yet, create:", p)
 		}
 	}
+
+	return nil, node
+}
+
+func mutate(node types.CRDT, mut operation.Mutation) error {
+
 	return nil
 }
 

@@ -9,11 +9,10 @@ import (
 // the path from the root until the leaf/node selected and the element ID
 // Example:
 // { "grosseries": { "food": ["pears", "onion"], "others": ["soap"]}, "aList": ["val1", 2, "val3"]}
-// cursor: {path: ["grosseries", "food"], key: 1} ==> onion
-// cursor: {path: ["aList"], key: 0} ==> val2
+// cursor: [{"MapT":"grosseries"}, {"ListT":"food"}, {"RegisterT": 1}] ==> onion
+// cursor: [{"MaptT": "gorsseries"}, {"ListT": "aList"}] ==> ["val1", 2, "val3"]
 type Cursor struct {
-	Path []PathItem  `json:"path"`
-	Id   interface{} `json:"id"`
+	Path []PathItem
 }
 
 type PathItem struct {
@@ -24,10 +23,13 @@ type PathItem struct {
 
 func newCursor(c []byte) (Cursor, error) {
 	cur := Cursor{}
-	err := json.Unmarshal(c, &cur)
+	path := []PathItem{}
+	err := json.Unmarshal(c, &path)
+
 	if err != nil {
-		return cur, err
+		return Cursor{}, err
 	}
+	cur.Path = path
 	err = cur.validate()
 	if err != nil {
 		return cur, err

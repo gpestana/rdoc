@@ -8,7 +8,7 @@ import (
 
 func TestNodeID(t *testing.T) {
 	nid := "123123123"
-	cursorStr := `{"path":[],"id":"test"}`
+	cursorStr := `[]`
 	op, err := New("10."+nid, []clock.Clock{}, []byte(cursorStr), Mutation{})
 	if err != nil {
 		t.Fatal(err)

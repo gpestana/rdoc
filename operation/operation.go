@@ -28,7 +28,7 @@ type Operation struct {
 	// branch or leaf node
 	Cursor Cursor
 	// Mutation requested at the specific operation's position
-	mutation Mutation
+	Mutation Mutation
 }
 
 // Returns new Operation object
@@ -41,7 +41,7 @@ func New(id string, deps []clock.Clock, c []byte, m Mutation) (*Operation, error
 		ID:       id,
 		deps:     deps,
 		Cursor:   cursor,
-		mutation: m,
+		Mutation: m,
 	}, nil
 }
 

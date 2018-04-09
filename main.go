@@ -12,7 +12,7 @@ func main() {
 
 	deps := []clock.Clock{}
 
-	cursor := []byte(`{"path": [{"MapT": "some"}, {"MapT" :"aMap"}, {"ListT": 1}], "id": 1}`)
+	cursor := []byte(`[{"MapT": "some"}, {"MapT" :"aMap"}, {"ListT": 2}]`)
 	mut := operation.NewMutation(operation.Insert, "val")
 	opId := obj.Clock.Timestamp()
 	op, err := operation.New(opId, deps, cursor, mut)
