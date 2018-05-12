@@ -18,7 +18,54 @@ From the paper's abstract:
 > devices with poor network connectivity, in peer-to-peer networks, and in 
 > messaging systems with end-to-end encryption.
 
-### Use cases for CDRTs
+## API
+
+**Create new JSON document**
+
+```
+import (
+	jcrdt "github/gpestana/json-crdt"	
+)
+
+doc := jcrdt.Init()
+
+fmt.Println(doc) 
+// {}
+```
+
+**Document editing**
+
+Changing the JSON document locally is triggered by calling `Change` method on
+the document object with the mutation data. The `change` method is immutable, so
+it returns a new object with the updated document.
+
+```
+c := []byte(`{"todo":{"done":["read book"],"buffered":[]}}`)
+doc2 := doc.Change(c)
+
+fmt.Println(doc2)
+// { todo: { done: ['read book'], buffered: []} }
+```
+
+**Document merging**
+
+Different documents can be merged by calling the method `Merge` on one the
+documents.
+
+```
+fmt.Println(doc)
+// { todo: { done: ['read book'], buffered: []} }
+
+fmt.Println(doc1)
+// { todo: { done: [], notes: ['this is a note']} }
+
+doc2 := doc.Merge(doc, doc1)
+
+fmt.Println(doc2)
+// { todo: { done: ['read book'], buffered: [], notes: ['this is a note']} }
+```
+
+### Use cases for JSON-CDRT
 
 A good discussion and suggestions of CRDT uses can be found in the 
 [research-CRDT repository maintained by IPFS](https://github.com/ipfs/research-CRDT/issues/1)
