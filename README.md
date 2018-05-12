@@ -22,7 +22,7 @@ From the paper's abstract:
 
 **Create new JSON document**
 
-```
+```go
 import (
 	jcrdt "github/gpestana/json-crdt"	
 )
@@ -39,7 +39,7 @@ Changing the JSON document locally is triggered by calling `Change` method on
 the document object with the mutation data. The `change` method is immutable, so
 it returns a new object with the updated document.
 
-```
+```go
 c := []byte(`{"todo":{"done":["read book"],"buffered":[]}}`)
 doc2 := doc.Change(c)
 
@@ -52,7 +52,7 @@ fmt.Println(doc2)
 Different documents can be merged by calling the method `Merge` on one the
 documents.
 
-```
+```go
 fmt.Println(doc)
 // { todo: { done: ['read book'], buffered: []} }
 
