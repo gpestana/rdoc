@@ -24,7 +24,7 @@ From the paper's abstract:
 
 ```go
 import (
-	jcrdt "github/gpestana/json-crdt"	
+  jcrdt "github/gpestana/json-crdt"	
 )
 
 doc := jcrdt.Init()
@@ -36,8 +36,7 @@ fmt.Println(doc)
 **Document editing**
 
 Changing the JSON document locally is triggered by calling `Change` method on
-the document object with the mutation data. The `change` method is immutable, so
-it returns a new object with the updated document.
+the document object with the mutation data.
 
 ```go
 c := []byte(`{"todo":{"done":["read book"],"buffered":[]}}`)
