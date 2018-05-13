@@ -21,7 +21,7 @@ The document is implemented in `/json.go`.
 Each node maintains a list of pointers to the next nodes, a set of
 dependencies (operation IDs which relied on the node's existence) and a `type`.
 A node may be of type `mapT`, `listT` or `registerT`. Each type has a value,
-which means different things depending on the type. In the case of `registerT -
+which means different things depending on the type. In the case of `registerT` -
 which is a multi-value register - a value is a set of either `int` or `string`
 The set should not be empty. The value of a `mapT` is the key of the map and it
 should never bt empty. The value of a `listT` is always nil, since the content
@@ -44,6 +44,7 @@ timestamp IDs
 an array of string
 	mutation : mutation to apply to node, represented as a data structure	 
 }
+```
 
 This data structure is defined in `/operation/operation.go`.
 
