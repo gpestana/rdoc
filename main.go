@@ -23,7 +23,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = obj.NewOperation(op)
+	err = obj.newOperation(op)
 	if err != nil {
 		log.Fatal(err)
 	}
