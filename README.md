@@ -20,49 +20,36 @@ From the paper's abstract:
 
 ## API
 
-**Create new JSON document**
+At this point, `rdoc` implements a document interface for an operation-based 
+CRDT JSON data structure. To manipulate the data structure, the user creates
+operations and calls the `ApplyOperation`  structure method. 
+
+The user interface with the expected getters and setters will sit between the
+user and document interface and it will be defined an worked on later.
+
+Example using the document interface:
 
 ```go
-import (
-  jcrdt "github/gpestana/json-crdt"	
-)
+doc := rdoc.Init() // initializes a new rdoc
 
-doc := jcrdt.Init()
+deps := []string{...}
+opID := "..."
+mutation := operation.NewMutation(...)
+cursor := operation.NewCursor(...)
 
-fmt.Println(doc) 
-// {}
+op := operation.New(id, deps, cursor, mutation)
+
+doc2 := doc.ApplyOperation(op)
+
+remoteOp := operation.Operation{}
+receiveRemoteOperation(&remoteOp) // receives remote operation
+
+doc3 := doc=4.ApplyRemoteOperation(remoteOp)
 ```
 
-**Document editing**
-
-Changing the JSON document locally is triggered by calling `Change` method on
-the document object with the mutation data.
-
-```go
-c := []byte(`{"todo":{"done":["read book"],"buffered":[]}}`)
-doc2 := doc.Change(c)
-
-fmt.Println(doc2)
-// { todo: { done: ['read book'], buffered: []} }
-```
-
-**Document merging**
-
-Different documents can be merged by calling the method `Merge` on one the
-documents.
-
-```go
-fmt.Println(doc)
-// { todo: { done: ['read book'], buffered: []} }
-
-fmt.Println(doc1)
-// { todo: { done: [], notes: ['this is a note']} }
-
-doc2 := doc.Merge(doc, doc1)
-
-fmt.Println(doc2)
-// { todo: { done: ['read book'], buffered: [], notes: ['this is a note']} }
-```
+Check the [internal specifications](./SPECS.md) if you are interested in
+contributing and/or understanding the implementation details and mechanics of 
+the `rdoc` data structure.
 
 ### Use cases for JSON-CDRT
 
