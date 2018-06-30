@@ -2,7 +2,10 @@
 
 This document describes the specifications and internals of the `rdoc` data
 structure. The `rdoc` is an implementation of an operation-based JSON CRDT as
-presented in [1][Martin Kleppmann, Alastair R. Beresford work](https://arxiv.org/abs/1608.03960).
+presented in [1] [Martin Kleppmann, Alastair R. Beresford work](https://arxiv.org/abs/1608.03960).
+
+For a conceptual description of the algorithm, check the [2] [JSON-CRDT
+explanation](https://github.com/ipfs/research-CRDT/blob/master/research/json-crdt.md).
 
 ## Interfaces
 
@@ -45,7 +48,7 @@ func (*doc) Serialize() ([]byte, error)
 Returns the JSON encoding of the current state of the document. Internally, the
 `Serialize` struct method will call `encoding.Marshal(v interface)`
 
-// TODO: define the user interface for mutating the document
+> // TODO: define the user interface for mutating the document
 
 **Examples**:
 
@@ -203,6 +206,50 @@ operations the `operation` to construct depends upon.
 
 ## Algorithm for applying operation on a document 
 
+A `Doc` exposes only two public methods: 
+
+```go
+func (d *Doc) ApplyOperation(op Operation) (*Doc, error) {}
+```
+
+```go
+func (d *Doc) ApplyRemoteOperation(op Operation) (*Doc, error) {}
+```
+
+**Remote operations checks**
+
+The `ApplyRemoteOperation()` is responsible for ensuring that a remote operation
+can be applyed locally and will eventually call `ApplyOperation()` if that is
+the case.
+
+Before applying a remote operation, conditions have to be met:
+
+	a) The operation hasn't been applied before. This can be checked by checking
+whether the operation ID is part of the set of operations applied by the `Doc`
+
+	b) All operation dependencies have been applied in the local document. This 
+can be verified by comparing the operation `deps` list withe the set of
+operations applied by the `Doc`.
+
+If both conditions are met, the `ApplyLocalOperation()` is called.
+
+**Traversing the document**
+
+The first step of applying local operations is to traverse the document tree and
+select the node pointed by the operation `cursor`. While traversing the tree,
+each of the nodes visited or created are updated to contain the `operationID` in
+their `deps` set. 
+
+A `cursor` is a set of cursor elements which contain a key and type of the node
+to visit. While traversing the document, if a node with the tuple `{type, key}` 
+does not exist, it must be created so that the traverse can proceed forward.
+
+**Applying the mutation**
+
+Once the node to apply the mutation has been selected, the `mutation` must be
+applied. There are 3 types of mutations, `INSERT`, `ASSIGN` and `DELETE`. The
+scheme to apply the mutations depends on the type of node selected.
+
 ## Document immutability
 
 The document structure and interface does not have any public methods which
@@ -213,4 +260,4 @@ new document is returned as part of the `(*Doc) ApplyOperation()` method.
 
 This design ensures that a document is immutable at the user level.
 
-// TODO: how to efficiently perform deepcopy on document structure
+> // TODO: how to efficiently perform deepcopy on document structure
