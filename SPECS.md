@@ -48,7 +48,7 @@ func (*doc) Serialize() ([]byte, error)
 Returns the JSON encoding of the current state of the document. Internally, the
 `Serialize` struct method will call `encoding.Marshal(v interface)`
 
-> // TODO: define the user interface for mutating the document
+> TODO: define the user interface for mutating the document
 
 **Examples**:
 
@@ -175,7 +175,7 @@ the respective key of the node to traverse to. A `cursor` is an ordered list of
 
 ```go
 cursor := []CursorElement{
-	CursorElement{Key: "root", Type: MapT},
+  CursorElement{Key: "root", Type: MapT},
   CursorElement{Key: "other", Type: MapT},
   CursorElement{Key: "other-new", Type: MapT},
   CursorElement{Key: 0, Type: ListT},
@@ -224,10 +224,10 @@ the case.
 
 Before applying a remote operation, conditions have to be met:
 
-	a) The operation hasn't been applied before. This can be checked by checking
+a) The operation hasn't been applied before. This can be checked by checking
 whether the operation ID is part of the set of operations applied by the `Doc`
 
-	b) All operation dependencies have been applied in the local document. This 
+b) All operation dependencies have been applied in the local document. This 
 can be verified by comparing the operation `deps` list withe the set of
 operations applied by the `Doc`.
 
@@ -250,6 +250,10 @@ Once the node to apply the mutation has been selected, the `mutation` must be
 applied. There are 3 types of mutations, `INSERT`, `ASSIGN` and `DELETE`. The
 scheme to apply the mutations depends on the type of node selected.
 
+## Document serialization
+
+> TODO: how to implement document serialization?
+
 ## Document immutability
 
 The document structure and interface does not have any public methods which
@@ -260,4 +264,4 @@ new document is returned as part of the `(*Doc) ApplyOperation()` method.
 
 This design ensures that a document is immutable at the user level.
 
-> // TODO: how to efficiently perform deepcopy on document structure
+> TODO: how to efficiently perform deepcopy on document structure
