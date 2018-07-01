@@ -6,7 +6,7 @@
 package operation
 
 import (
-	"github.com/gpestana/crdt-json/clock"
+	"github.com/gpestana/rdoc/clock"
 	"strings"
 )
 
@@ -32,11 +32,7 @@ type Operation struct {
 }
 
 // Returns new Operation object
-func New(id string, deps []clock.Clock, c []byte, m Mutation) (*Operation, error) {
-	cursor, err := newCursor(c)
-	if err != nil {
-		return &Operation{}, err
-	}
+func New(id string, deps []clock.Clock, cursor Cursor, m Mutation) (*Operation, error) {
 	return &Operation{
 		ID:       id,
 		deps:     deps,

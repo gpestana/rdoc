@@ -2,14 +2,14 @@ package operation
 
 import (
 	"fmt"
-	"github.com/gpestana/crdt-json/clock"
+	"github.com/gpestana/rdoc/clock"
 	"testing"
 )
 
 func TestNodeID(t *testing.T) {
 	nid := "123123123"
-	cursorStr := `[]`
-	op, err := New("10."+nid, []clock.Clock{}, []byte(cursorStr), Mutation{})
+	cursor := NewCursor()
+	op, err := New("10."+nid, []clock.Clock{}, cursor, Mutation{})
 	if err != nil {
 		t.Fatal(err)
 	}
