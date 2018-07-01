@@ -1,6 +1,6 @@
-# crdt-json
+# rdoc
 
-[![Build Status](https://travis-ci.org/gpestana/crdt-json.svg?branch=master)](https://travis-ci.org/gpestana/crdt-json)
+[![Build Status](https://travis-ci.org/gpestana/rdoc.svg?branch=master)](https://travis-ci.org/gpestana/rdoc)
 
 Conflict-free replicated JSON implementation in Go based on 
 [Martin Kleppmann, Alastair R. Beresford
@@ -51,11 +51,11 @@ Check the [internal specifications](./SPECS.md) if you are interested in
 contributing and/or understanding the implementation details and mechanics of 
 the `rdoc` data structure.
 
-### Use cases for JSON-CDRT
+## Use cases for JSON-CDRT
 
 A good discussion and suggestions of CRDT uses can be found in the 
 [research-CRDT repository maintained by IPFS](https://github.com/ipfs/research-CRDT/issues/1)
 
-### License
+## License
 
 MIT

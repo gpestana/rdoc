@@ -1,29 +1,29 @@
 package main
 
 import (
-	"github.com/gpestana/crdt-json/clock"
-	"github.com/gpestana/crdt-json/operation"
+	"github.com/gpestana/rdoc/clock"
+	"github.com/gpestana/rdoc/operation"
 	"log"
 )
 
 func main() {
 	uid := "a8fdc205a9f19cc1c7507a60c4f01b13d11d7fd0"
-	obj := New(uid)
+	obj := Init(uid)
 
 	deps := []clock.Clock{}
 
-	cursor := []byte(`[{"MapT": "some"}, {"MapT" :"aMap"}, {"ListT": 2}]`)
+	cursor := operation.NewCursor(
+		operation.MapKey{"some"},
+		operation.ListKey{0},
+		operation.MapKey{"map"},
+	)
+
 	mut := operation.NewMutation(operation.Insert, "val")
-	opId := obj.Clock.Timestamp()
+	opId := obj.Id.Timestamp()
 	op, err := operation.New(opId, deps, cursor, mut)
 
 	log.Printf("%+v\n", op)
 
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = obj.newOperation(op)
 	if err != nil {
 		log.Fatal(err)
 	}

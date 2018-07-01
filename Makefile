@@ -1,4 +1,8 @@
 all: test build run-manual
+ci: pre-build test
+
+pre-build:
+	go get .
 
 build:
 	go build .
@@ -8,5 +12,5 @@ test:
 	go test ./... -cover
 
 run-manual:
-	./crdt-json
+	./rdoc
 
