@@ -17,8 +17,9 @@ const (
 )
 
 type Doc struct {
-	Id           clock.Clock
-	OperationsID []clock.Clock
+	Id           string
+	Clock        clock.Clock
+	OperationsId []string
 	Head         *Node
 }
 
@@ -28,8 +29,9 @@ func Init(id string) *Doc {
 	headNode := newNode(nil)
 	c := clock.New([]byte(id))
 	return &Doc{
-		Id:           c,
-		OperationsID: []clock.Clock{},
+		Id:           id,
+		Clock:        c,
+		OperationsId: []string{},
 		Head:         headNode,
 	}
 }
@@ -46,7 +48,7 @@ func (d *Doc) ApplyRemoteOperation() (*Doc, error) {
 // Traverses the document form root element to the node indicated by the cursor
 // input. When a path does not exist in the current document, create the node
 // and link it to the document.
-func (d *Doc) traverse(cursor operation.Cursor, opId clock.Clock) (*Node, bool) {
+func (d *Doc) traverse(cursor operation.Cursor, opId string) (*Node, bool) {
 	var nPtr *Node
 	nPtr = d.Head
 	readOnly := true

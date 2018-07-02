@@ -19,7 +19,7 @@ func main() {
 	)
 
 	mut := operation.NewMutation(operation.Insert, "val")
-	opId := obj.Id.Timestamp()
+	opId := obj.Clock.Timestamp()
 	op, err := operation.New(opId, deps, cursor, mut)
 
 	log.Printf("%+v\n", op)

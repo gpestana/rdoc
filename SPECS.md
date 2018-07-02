@@ -110,26 +110,31 @@ doc3 := doc=4.ApplyRemoteOperation(remoteOp)
 ## Document management specifications
 
 This section defines how an operation, document and auxiliary types are 
-represented and what are their methods. An operation identifies uniquely a 
-mutation in the local document.
-
-A document may contain 3 different types: a list, a map and a registers. Each of
-the types may be empty or not. Each of the list and map values are pointers to 
-document nodes. A register is a multi-value register represented by a hash map 
-in which keys are the values of the registers and values the operations that
-assigned the register value.
+represented and what are their methods.
 
 **Document data structure**:
 
 ```go
 type Doc struct {
-	id string
-	deps []string
-	head *Node
+	Id string
+	Clock clock.Clock
+	OperationsId []string
+	Head *Node
 }
 ```
+A document holds the main JSON CRDT data structure metadata and the pointer for
+the first node. Each document is uniquely identified by and ID and every user
+who wants to interact with the document must know its ID. Each replica of the
+document maintains its own logic clock to generate IDs for operations and
+confirm event causality.
 
 **Node**:
+
+A node may contain 3 different types: a list, a map and a registers. Each of
+the types may be empty or not. Each of the list and map values are pointers to 
+document nodes. A register is a multi-value register represented by a hash map 
+in which keys are the values of the registers and values the operations that
+assigned the register value.
 
 ```go
 type Node struct {
@@ -141,11 +146,6 @@ type Node struct {
 }
 ```
 
-A `Node`` may contain a no-empty map, list and/or register. In
-order to ensure the properties required by the JSON CRDT, a node in the document
-tree may be at the same time a map, list and/or register (see paper for more
-information). Thus, a `Doc` keeps a pointer for storing information for each
-type.
 
 Each node keeps a list with IDs of dependencies. A dependency is an operation ID
 that the node depends on.
