@@ -1,5 +1,4 @@
-// Defines rdoc document data structure and private methods
-package main
+package rdoc
 
 import (
 	"errors"
@@ -48,10 +47,14 @@ func (d *Doc) ApplyRemoteOperation() (*Doc, error) {
 // Traverses the document form root element to the node indicated by the cursor
 // input. When a path does not exist in the current document, create the node
 // and link it to the document.
-func (d *Doc) traverse(cursor operation.Cursor, opId string) (*Node, bool) {
+// The traverse function returns a pointer to the last node, a list of pointers
+// od nodes traversed and a list of pointers of nodes created
+func (d *Doc) traverse(cursor operation.Cursor) (*Node, []*Node, []*Node) {
 	var nPtr *Node
+	var travNodes []*Node
+	var createdNodes []*Node
+
 	nPtr = d.Head
-	readOnly := true
 
 	for _, c := range cursor.Path {
 		k := c.Get()
@@ -61,29 +64,33 @@ func (d *Doc) traverse(cursor operation.Cursor, opId string) (*Node, bool) {
 			nodeType := MapT
 			nif, exists := nPtr.hmap.Get(k.(string))
 			if !exists {
-				readOnly = false
-				newNode := newNode(k)
-				_ = nPtr.link(nodeType, newNode)
-				nPtr = newNode
+				nn := newNode(k)
+				_ = nPtr.link(nodeType, nn)
+				nPtr = nn
+				travNodes = append(travNodes, nPtr)
+				createdNodes = append(createdNodes, nPtr)
 				continue
 			}
 			nPtr = nif.(*Node)
+			travNodes = append(travNodes, nPtr)
 
 		// ListT
 		case int:
 			nodeType := ListT
 			nif, exists := nPtr.list.Get(k.(int))
 			if !exists {
-				readOnly = false
-				newNode := newNode(k)
-				_ = nPtr.link(nodeType, newNode)
-				nPtr = newNode
+				nn := newNode(k)
+				_ = nPtr.link(nodeType, nn)
+				nPtr = nn
+				travNodes = append(travNodes, nPtr)
+				createdNodes = append(createdNodes, nPtr)
 				continue
 			}
 			nPtr = nif.(*Node)
+			travNodes = append(travNodes, nPtr)
 		}
 	}
-	return nPtr, readOnly
+	return nPtr, travNodes, createdNodes
 }
 
 type Node struct {
@@ -134,7 +141,8 @@ func (n *Node) link(linkType int, node *Node) error {
 // Returns all subsequent nodes from a particular Node
 func (n *Node) allChildren() []*Node {
 	var children []*Node
-	tmp := []interface{}{n}
+	var tmp []*Node
+	tmp = append(tmp, directChildren(n)...)
 
 	for {
 		if len(tmp) == 0 {
@@ -143,12 +151,24 @@ func (n *Node) allChildren() []*Node {
 		nextTmp := tmp[:1]
 		tmp = tmp[1:]
 
-		c := nextTmp[0].(*Node)
-		tmp = append(tmp, c.hmap.Values()...)
-		tmp = append(tmp, c.list.Values()...)
-		tmp = append(tmp, c.reg.Values()...)
+		c := nextTmp[0]
+		tmp = append(tmp, directChildren(c)...)
 		children = append(children, c)
 	}
 
 	return children
+}
+
+func directChildren(n *Node) []*Node {
+	var ch []*Node
+	var in []interface{}
+	in = append(in, n.hmap.Values()...)
+	in = append(in, n.list.Values()...)
+	in = append(in, n.reg.Values()...)
+
+	// type cast to *Node
+	for i, _ := range in {
+		ch = append(ch, in[i].(*Node))
+	}
+	return ch
 }

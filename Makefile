@@ -1,4 +1,4 @@
-all: test build run-manual
+all: test build
 ci: pre-build test
 
 pre-build:
@@ -10,7 +10,3 @@ build:
 test: 
 	go tool vet .
 	go test ./... -cover
-
-run-manual:
-	./rdoc
-
