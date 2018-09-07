@@ -6,7 +6,6 @@
 package operation
 
 import (
-	"github.com/gpestana/rdoc/clock"
 	"strings"
 )
 
@@ -22,7 +21,7 @@ type Operation struct {
 	ID string
 	// Set of casual dependencies of the operation (all operations that
 	// happened before the current operation)
-	deps []clock.Clock
+	Deps []string
 	// Ambiguously identifies the position in the JSON object to apply the
 	// operation by describing a path from the root of the document tree to some
 	// branch or leaf node
@@ -32,10 +31,10 @@ type Operation struct {
 }
 
 // Returns new Operation object
-func New(id string, deps []clock.Clock, cursor Cursor, m Mutation) (*Operation, error) {
+func New(id string, deps []string, cursor Cursor, m Mutation) (*Operation, error) {
 	return &Operation{
 		ID:       id,
-		deps:     deps,
+		Deps:     deps,
 		Cursor:   cursor,
 		Mutation: m,
 	}, nil

@@ -5,7 +5,7 @@ import (
 	"github.com/emirpasic/gods/lists/arraylist"
 	"github.com/emirpasic/gods/maps/hashmap"
 	"github.com/gpestana/rdoc/clock"
-	"github.com/gpestana/rdoc/operation"
+	op "github.com/gpestana/rdoc/operation"
 	"log"
 )
 
@@ -16,10 +16,11 @@ const (
 )
 
 type Doc struct {
-	Id           string
-	Clock        clock.Clock
-	OperationsId []string
-	Head         *Node
+	Id               string
+	Clock            clock.Clock
+	OperationsId     []string
+	Head             *Node
+	OperationsBuffer []op.Operation
 }
 
 // Returns a new rdoc data structure. It receives an ID which must be
@@ -28,20 +29,48 @@ func Init(id string) *Doc {
 	headNode := newNode(nil)
 	c := clock.New([]byte(id))
 	return &Doc{
-		Id:           id,
-		Clock:        c,
-		OperationsId: []string{},
-		Head:         headNode,
+		Id:               id,
+		Clock:            c,
+		OperationsId:     []string{},
+		Head:             headNode,
+		OperationsBuffer: []op.Operation{},
 	}
 }
 
-func (d *Doc) ApplyOperation() (*Doc, error) {
-	return &Doc{}, nil
+func (d *Doc) ApplyRemoteOperation(o op.Operation) (*Doc, error) {
+	// if operation has been applied already, skip
+	if containsId(d.OperationsId, o.ID) {
+		return d, nil
+	}
+	// if operation dependencies havent been all applied in the document, buffer
+	// the operation
+	missingOp := filter(o.Deps, d.OperationsId)
+	if len(missingOp) != 0 {
+		d.OperationsBuffer = append(d.OperationsBuffer, o)
+		return d, nil
+	}
+	return d.ApplyOperation(o)
 }
 
-func (d *Doc) ApplyRemoteOperation() (*Doc, error) {
-	// perform the remote operation checks
-	return d.ApplyOperation()
+func (d *Doc) ApplyOperation(o op.Operation) (*Doc, error) {
+	nPtr, travNodes, createdNodes := d.traverse(o.Cursor)
+
+	// updates dependencies of traversed and created nodes
+	var deps []*Node
+	deps = append(deps, travNodes...)
+	deps = append(deps, createdNodes...)
+	for _, n := range deps {
+		n.AddDependency(o.ID)
+	}
+
+	//TODO: how to rollback side effects of traverse if Mutate() fails?
+	err := nPtr.Mutate(o)
+	if err != nil {
+		return d, err
+	}
+
+	d.OperationsId = append(d.OperationsId, o.ID)
+	return d, nil
 }
 
 // Traverses the document form root element to the node indicated by the cursor
@@ -49,7 +78,7 @@ func (d *Doc) ApplyRemoteOperation() (*Doc, error) {
 // and link it to the document.
 // The traverse function returns a pointer to the last node, a list of pointers
 // od nodes traversed and a list of pointers of nodes created
-func (d *Doc) traverse(cursor operation.Cursor) (*Node, []*Node, []*Node) {
+func (d *Doc) traverse(cursor op.Cursor) (*Node, []*Node, []*Node) {
 	var nPtr *Node
 	var travNodes []*Node
 	var createdNodes []*Node
@@ -109,6 +138,16 @@ func newNode(key interface{}) *Node {
 		list: arraylist.New(),
 		reg:  hashmap.New(),
 	}
+}
+
+func (n *Node) Mutate(o op.Operation) error {
+	return nil
+}
+
+// appends new dependency to Node
+func (n *Node) AddDependency(d string) {
+	// TODO: should check if dep is valid with clock.Clock primitves?
+	n.deps.Add(d)
 }
 
 // Links a node to the current node. The new node is linked depending on the
@@ -171,4 +210,26 @@ func directChildren(n *Node) []*Node {
 		ch = append(ch, in[i].(*Node))
 	}
 	return ch
+}
+
+// checks if `sl` stice contains `id` string
+func containsId(sl []string, id string) bool {
+	for i, _ := range sl {
+		if sl[i] == id {
+			return true
+		}
+	}
+	return false
+}
+
+// returns all strings in `deps` slice which do not exist in `ops`
+func filter(deps []string, ops []string) []string {
+	var diff []string
+	for i, _ := range deps {
+		contains := containsId(ops, deps[i])
+		if !contains {
+			diff = append(diff, deps[i])
+		}
+	}
+	return diff
 }
