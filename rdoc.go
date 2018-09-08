@@ -161,6 +161,11 @@ func (n *Node) Mutate(o op.Operation) error {
 	case op.Assign:
 		// delete and proceed
 		children := n.allChildren()
+
+		if mut.Value == "B" {
+			log.Println("WORKINGGGGGGGGGGGG")
+		}
+
 		clearNodes(children, o.Deps)
 	}
 
@@ -174,8 +179,9 @@ func (n *Node) Mutate(o op.Operation) error {
 		n.hmap.Put(mut.Key.(string), mut.Value)
 	case nil:
 		// register
+		n.reg.Put(o.ID, mut.Value)
 	default:
-		n.hmap.Put(o.ID, mut.Value)
+		return errors.New("Key type is not valid")
 	}
 
 	return err
