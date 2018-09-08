@@ -149,18 +149,19 @@ func (n *Node) GetList() *arraylist.List {
 // note: assumes that mutation never fails for now
 func (n *Node) Mutate(o op.Operation) error {
 	mut := o.Mutation
+	var err error
 
 	switch mut.Key.(type) {
 	case int:
-		// list
+		err = mut.List(n.list)
 	case string:
-		// map
+		err = mut.Map(n.hmap)
 	case nil:
-		// register
+		err = mut.Reg(n.hmap)
 	default:
-		return errors.New("Invalid mutation")
+		err = errors.New("Invalid mutation")
 	}
-	return nil
+	return err
 }
 
 // appends new dependency to Node

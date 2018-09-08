@@ -6,6 +6,9 @@
 package operation
 
 import (
+	"errors"
+	"github.com/emirpasic/gods/lists/arraylist"
+	"github.com/emirpasic/gods/maps/hashmap"
 	"strings"
 )
 
@@ -58,4 +61,41 @@ type Mutation struct {
 func NewMutation(typ int, k interface{}, v interface{}) (Mutation, error) {
 	// TODO: verify that mutation Value is of type of string or int
 	return Mutation{Typ: typ, Key: k, Value: v}, nil
+}
+
+// applies mutation to list
+func (mut Mutation) List(l *arraylist.List) error {
+	switch mut.Typ {
+	case Insert:
+		l.Insert(mut.Key.(int), mut.Value)
+	case Assign:
+	case Delete:
+	default:
+		return errors.New("Invalid mutation: Type of mutation invalid")
+	}
+	return nil
+}
+
+// applies mutation to map
+func (mut Mutation) Map(m *hashmap.Map) error {
+	switch mut.Typ {
+	case Insert:
+	case Assign:
+	case Delete:
+	default:
+		return errors.New("Invalid mutation: Type of mutation invalid")
+	}
+	return nil
+}
+
+// applies mutation to register
+func (mut Mutation) Reg(m *hashmap.Map) error {
+	switch mut.Typ {
+	case Insert:
+	case Assign:
+	case Delete:
+	default:
+		return errors.New("Invalid mutation: Type of mutation invalid")
+	}
+	return nil
 }
