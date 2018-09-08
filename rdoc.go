@@ -63,6 +63,7 @@ func (d *Doc) ApplyOperation(o op.Operation) (*Doc, error) {
 		n.AddDependency(o.ID)
 	}
 
+	//TODO: let's assume the Mutate() call never fails for now.
 	//TODO: how to rollback side effects of traverse if Mutate() fails?
 	err := nPtr.Mutate(o)
 	if err != nil {
@@ -140,7 +141,25 @@ func newNode(key interface{}) *Node {
 	}
 }
 
+func (n *Node) GetList() *arraylist.List {
+	return n.list
+}
+
+// applies operation mutation to the node
+// note: assumes that mutation never fails for now
 func (n *Node) Mutate(o op.Operation) error {
+	mut := o.Mutation
+
+	switch mut.Key.(type) {
+	case int:
+		// list
+	case string:
+		// map
+	case nil:
+		// register
+	default:
+		return errors.New("Invalid mutation")
+	}
 	return nil
 }
 

@@ -4,13 +4,15 @@ package operation
 // the path from the root until the leaf/node selected and the element ID
 type Cursor struct {
 	Path []CursorElement
+	Key  interface{}
 }
 
-func NewCursor(path ...CursorElement) Cursor {
+func NewCursor(key interface{}, path ...CursorElement) Cursor {
 	c := Cursor{}
 	for _, e := range path {
 		c.Path = append(c.Path, e)
 	}
+	c.Key = key
 	return c
 }
 

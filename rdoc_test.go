@@ -2,7 +2,7 @@ package rdoc
 
 import (
 	"fmt"
-	"github.com/gpestana/rdoc/operation"
+	op "github.com/gpestana/rdoc/operation"
 	"testing"
 )
 
@@ -10,10 +10,11 @@ func TestTraverseSimple(t *testing.T) {
 	docId := "doc1"
 	doc := Init(docId)
 
-	cursor1 := operation.NewCursor(
-		operation.MapKey{"root"},
-		operation.MapKey{"sub-node"},
-		operation.ListKey{0},
+	cursor1 := op.NewCursor(
+		0, // cursor's key
+		op.MapKey{"root"},
+		op.MapKey{"sub-node"},
+		op.ListKey{0},
 	)
 	n, trvN, crtN := doc.traverse(cursor1)
 
@@ -50,11 +51,12 @@ func TestAllChildren(t *testing.T) {
 	docId := "doc1"
 	doc := Init(docId)
 
-	cursor1 := operation.NewCursor(
-		operation.MapKey{"root"},
-		operation.MapKey{"sub-node"},
-		operation.ListKey{0},
-		operation.MapKey{"some"},
+	cursor1 := op.NewCursor(
+		"key", // cursor's key
+		op.MapKey{"root"},
+		op.MapKey{"sub-node"},
+		op.ListKey{0},
+		op.MapKey{"some"},
 	)
 	doc.traverse(cursor1)
 
