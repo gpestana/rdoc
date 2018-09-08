@@ -7,7 +7,7 @@ import (
 
 func TestNodeID(t *testing.T) {
 	nid := "123123123"
-	cursor := NewCursor()
+	cursor := NewCursor(0)
 	op, err := New("10."+nid, []string{}, cursor, Mutation{})
 	if err != nil {
 		t.Fatal(err)

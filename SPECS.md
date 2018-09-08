@@ -13,16 +13,16 @@ The `rdoc` data structure exposes 3 interfaces with different
 responsibilities and scopes:
 
 - **User interface**: the high level interface for the user to interact with
-  `rdoc` documents. It specifies how the user initiates documents and perform
+  `rdoc` documents. It exposes ways for starting a document and perform
 modifications in it such as modifying, creating and deleting nodes in the JSON
-document. The user interface also provides reading interface for the user to get
+document. The user interface also provides reading API so that the user to get
 the current state of the document.
 
 - **Document interface**: the private interface which is called by proxy and not
   explicitly by the user. This interface manages the document state and applies
 the operations requested by the user interface. The document interface works at
-an operations level. Its responsibility is to apply remote and local operations
-against the current local state.
+an operations level and its responsibility is to apply remote and local 
+operations against the current local state.
 
 The `rdoc` exposes the user interface publicly. The document interface is 
 private and responsible to manage the JSON document internally so that the CRDT 
@@ -63,8 +63,7 @@ bdoc := doc.Serialize()
 
 ### Document interface
 
-The document interface is the API which is used to internally modify and read
-the document structure.
+The document interface is the API which is used to modify and read the document.
 
 **API**:
 
@@ -120,6 +119,7 @@ type Doc struct {
 	Clock clock.Clock
 	OperationsId []string
 	Head *Node
+	OperationsBuffer []Operation
 }
 ```
 A document holds the main JSON CRDT data structure metadata and the pointer for
@@ -146,7 +146,6 @@ type Node struct {
 }
 ```
 
-
 Each node keeps a list with IDs of dependencies. A dependency is an operation ID
 that the node depends on.
 
@@ -160,10 +159,10 @@ shared across peers in the network. Each operation contains a cursor, a
 
 ```go
 type Operation struct {
-	id string
-	deps []string
-	cursor []CursorElement
-	mutation Mutation
+	Id string
+	Deps []string
+	Cursor []CursorElement
+	Mutation Mutation
 }	
 ```
 
@@ -174,21 +173,21 @@ the respective key of the node to traverse to. A `cursor` is an ordered list of
 `CursorElements`.
 
 ```go
-cursor := []CursorElement{
+cursor := NewCursor(
   CursorElement{Key: "root", Type: MapT},
   CursorElement{Key: "other", Type: MapT},
   CursorElement{Key: "other-new", Type: MapT},
   CursorElement{Key: 0, Type: ListT},
-}
+)
 
-// cursor points at root.other.other-new[0]
+// cursor points at document branch `root.other.other-new[0]`
 ```
 
 A `mutation` describes what is the modification to apply to the node selected by
 the `cursor`.
 
 ```go
-func NewMutation(type string, k interface, v interface) (Mutation, error)
+func NewMutation(int string, k interface{}, v interface{}) (Mutation, error)
 ````
 
 Returns a new `mutation`. The type input can be one of `INSERT`, `DELETE`.
@@ -224,10 +223,10 @@ the case.
 
 Before applying a remote operation, conditions have to be met:
 
-a) The operation hasn't been applied before. This can be checked by checking
+	a) The operation hasn't been applied before. This can be checked by checking
 whether the operation ID is part of the set of operations applied by the `Doc`
 
-b) All operation dependencies have been applied in the local document. This 
+	b) All operation dependencies have been applied in the local document. This 
 can be verified by comparing the operation `deps` list withe the set of
 operations applied by the `Doc`.
 

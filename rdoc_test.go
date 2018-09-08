@@ -2,7 +2,7 @@ package rdoc
 
 import (
 	"fmt"
-	"github.com/gpestana/rdoc/operation"
+	op "github.com/gpestana/rdoc/operation"
 	"testing"
 )
 
@@ -10,10 +10,11 @@ func TestTraverseSimple(t *testing.T) {
 	docId := "doc1"
 	doc := Init(docId)
 
-	cursor1 := operation.NewCursor(
-		operation.MapKey{"root"},
-		operation.MapKey{"sub-node"},
-		operation.ListKey{0},
+	cursor1 := op.NewCursor(
+		0, // cursor's key
+		op.MapKey{"root"},
+		op.MapKey{"sub-node"},
+		op.ListKey{0},
 	)
 	n, trvN, crtN := doc.traverse(cursor1)
 
@@ -50,11 +51,12 @@ func TestAllChildren(t *testing.T) {
 	docId := "doc1"
 	doc := Init(docId)
 
-	cursor1 := operation.NewCursor(
-		operation.MapKey{"root"},
-		operation.MapKey{"sub-node"},
-		operation.ListKey{0},
-		operation.MapKey{"some"},
+	cursor1 := op.NewCursor(
+		"key", // cursor's key
+		op.MapKey{"root"},
+		op.MapKey{"sub-node"},
+		op.ListKey{0},
+		op.MapKey{"some"},
 	)
 	doc.traverse(cursor1)
 
@@ -76,4 +78,25 @@ func TestAllChildren(t *testing.T) {
 			t.Error(fmt.Sprintf("fetching all childrens is not behaving as expected"))
 		}
 	}
+}
+
+func TestMutateList(t *testing.T) {
+	val := "list_element"
+	mut, _ := op.NewMutation(op.Insert, 0, val)
+	o, err := op.New("", []string{}, op.NewCursor("key"), mut)
+	if err != nil {
+		t.Error(err)
+	}
+	node := newNode("key")
+	node.Mutate(*o)
+
+	l := node.GetList()
+	if l.Size() != 1 {
+		t.Error(fmt.Sprintf("List should have lenght 1 after mutation, it has %v", l.Size()))
+	}
+
+	if !l.Contains(val) {
+		t.Error(fmt.Sprintf("List should contain %v after mutation but it does not", val))
+	}
+
 }

@@ -44,7 +44,7 @@ func (d *Doc) ApplyRemoteOperation(o op.Operation) (*Doc, error) {
 	}
 	// if operation dependencies havent been all applied in the document, buffer
 	// the operation
-	missingOp := filter(o.Deps, d.OperationsId)
+	missingOp := diff(o.Deps, d.OperationsId)
 	if len(missingOp) != 0 {
 		d.OperationsBuffer = append(d.OperationsBuffer, o)
 		return d, nil
@@ -63,6 +63,7 @@ func (d *Doc) ApplyOperation(o op.Operation) (*Doc, error) {
 		n.AddDependency(o.ID)
 	}
 
+	//TODO: let's assume the Mutate() call never fails for now.
 	//TODO: how to rollback side effects of traverse if Mutate() fails?
 	err := nPtr.Mutate(o)
 	if err != nil {
@@ -124,7 +125,7 @@ func (d *Doc) traverse(cursor op.Cursor) (*Node, []*Node, []*Node) {
 
 type Node struct {
 	key  interface{}
-	deps *arraylist.List
+	deps []string
 	hmap *hashmap.Map
 	list *arraylist.List
 	reg  *hashmap.Map
@@ -133,21 +134,57 @@ type Node struct {
 func newNode(key interface{}) *Node {
 	return &Node{
 		key:  key,
-		deps: arraylist.New(),
+		deps: []string{},
 		hmap: hashmap.New(),
 		list: arraylist.New(),
 		reg:  hashmap.New(),
 	}
 }
 
+func (n *Node) GetList() *arraylist.List {
+	return n.list
+}
+
+// applies operation mutation to the node
+// note: assumes that mutation never fails for now
 func (n *Node) Mutate(o op.Operation) error {
-	return nil
+	mut := o.Mutation
+	var err error
+
+	// 1) remove nodes if type of mutation is type Delete or Assign
+	switch mut.Typ {
+	case op.Delete:
+		// delete and return
+		children := n.allChildren()
+		clearNodes(children, o.Deps)
+		return nil
+	case op.Assign:
+		// delete and proceed
+		children := n.allChildren()
+		clearNodes(children, o.Deps)
+	}
+
+	// 2) modify node if mutation is type Insert or Assign
+	switch mut.Key.(type) {
+	case int:
+		// list
+		n.list.Insert(mut.Key.(int), mut.Value)
+	case string:
+		// map
+		n.hmap.Put(mut.Key.(string), mut.Value)
+	case nil:
+		// register
+	default:
+		n.hmap.Put(o.ID, mut.Value)
+	}
+
+	return err
 }
 
 // appends new dependency to Node
 func (n *Node) AddDependency(d string) {
 	// TODO: should check if dep is valid with clock.Clock primitves?
-	n.deps.Add(d)
+	n.deps = append(n.deps, d)
 }
 
 // Links a node to the current node. The new node is linked depending on the
@@ -196,40 +233,4 @@ func (n *Node) allChildren() []*Node {
 	}
 
 	return children
-}
-
-func directChildren(n *Node) []*Node {
-	var ch []*Node
-	var in []interface{}
-	in = append(in, n.hmap.Values()...)
-	in = append(in, n.list.Values()...)
-	in = append(in, n.reg.Values()...)
-
-	// type cast to *Node
-	for i, _ := range in {
-		ch = append(ch, in[i].(*Node))
-	}
-	return ch
-}
-
-// checks if `sl` stice contains `id` string
-func containsId(sl []string, id string) bool {
-	for i, _ := range sl {
-		if sl[i] == id {
-			return true
-		}
-	}
-	return false
-}
-
-// returns all strings in `deps` slice which do not exist in `ops`
-func filter(deps []string, ops []string) []string {
-	var diff []string
-	for i, _ := range deps {
-		contains := containsId(ops, deps[i])
-		if !contains {
-			diff = append(diff, deps[i])
-		}
-	}
-	return diff
 }
