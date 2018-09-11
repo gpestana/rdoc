@@ -80,6 +80,8 @@ func TestAllChildren(t *testing.T) {
 	}
 }
 
+// Mutate()
+
 func TestMutateList(t *testing.T) {
 	val := "list_element"
 	mut, _ := op.NewMutation(op.Insert, 0, val)
@@ -97,6 +99,49 @@ func TestMutateList(t *testing.T) {
 
 	if !l.Contains(val) {
 		t.Error(fmt.Sprintf("List should contain %v after mutation but it does not", val))
+	}
+}
+
+func TestMutateRegister(t *testing.T) {
+	val := "value"
+	mut, _ := op.NewMutation(op.Assign, nil, val)
+	opId := "operation_id"
+	o, err := op.New(opId, []string{}, op.NewEmptyCursor(), mut)
+	if err != nil {
+		t.Error(t)
+	}
+
+	node := newNode("test")
+	node.Mutate(*o)
+
+	r := node.GetReg()
+	if r.Size() != 1 {
+		t.Error(fmt.Sprintf("Register map should have 1 element, got %v instead", r.Size()))
+	}
+	rval, _ := r.Get(opId)
+	if rval != val {
+		t.Error(fmt.Sprintf("Register map should have an element associated with %v", opId))
+	}
+
+	// write diff value in same register
+	val2 := "value_2"
+	mut2, _ := op.NewMutation(op.Assign, nil, val2)
+	opId2 := "operation_id_2"
+	o2, err := op.New(opId2, []string{}, op.NewEmptyCursor(), mut2)
+	if err != nil {
+		t.Error(t)
+	}
+
+	node.Mutate(*o2)
+	r = node.GetReg()
+
+	if r.Size() != 2 {
+		t.Error(fmt.Sprintf("Register map should have 2 element, got %v instead", r.Size()))
+	}
+
+	rval, _ = r.Get(opId2)
+	if rval != val2 {
+		t.Error(fmt.Sprintf("Register map should have an element associated with %v", opId2))
 	}
 
 }
