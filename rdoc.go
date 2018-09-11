@@ -2,6 +2,7 @@ package rdoc
 
 import (
 	"errors"
+	"fmt"
 	"github.com/emirpasic/gods/lists/arraylist"
 	"github.com/emirpasic/gods/maps/hashmap"
 	"github.com/gpestana/rdoc/clock"
@@ -123,6 +124,13 @@ func (d *Doc) traverse(cursor op.Cursor) (*Node, []*Node, []*Node) {
 	return nPtr, travNodes, createdNodes
 }
 
+func (d Doc) String() string {
+	ids := fmt.Sprintf("ID: %v; ClockId: %v", d.Id, d.Clock)
+	ops := fmt.Sprintf("Operations: applied: %v, buffered: %v", d.OperationsId, d.OperationsBuffer)
+	node := fmt.Sprintf("Head: %v", d.Head)
+	return fmt.Sprintf("%v\n%v\n%v\n", ids, ops, node)
+}
+
 type Node struct {
 	key  interface{}
 	deps []string
@@ -143,6 +151,14 @@ func newNode(key interface{}) *Node {
 
 func (n *Node) GetList() *arraylist.List {
 	return n.list
+}
+
+func (n *Node) GetMap() *hashmap.Map {
+	return n.hmap
+}
+
+func (n *Node) GetReg() *hashmap.Map {
+	return n.reg
 }
 
 // applies operation mutation to the node
@@ -171,11 +187,14 @@ func (n *Node) Mutate(o op.Operation) error {
 		n.list.Insert(mut.Key.(int), mut.Value)
 	case string:
 		// map
-		n.hmap.Put(mut.Key.(string), mut.Value)
+		nn := newNode(mut.Key)
+		nn.reg.Put(o.ID, mut.Value)
+		n.hmap.Put(mut.Key.(string), nn)
 	case nil:
 		// register
+		n.reg.Put(o.ID, mut.Value)
 	default:
-		n.hmap.Put(o.ID, mut.Value)
+		return errors.New("Key type is not valid")
 	}
 
 	return err

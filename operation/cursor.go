@@ -16,6 +16,10 @@ func NewCursor(key interface{}, path ...CursorElement) Cursor {
 	return c
 }
 
+func NewEmptyCursor() Cursor {
+	return Cursor{}
+}
+
 type CursorElement interface {
 	Get() interface{}
 }

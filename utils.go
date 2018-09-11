@@ -5,11 +5,15 @@ func directChildren(n *Node) []*Node {
 	var in []interface{}
 	in = append(in, n.hmap.Values()...)
 	in = append(in, n.list.Values()...)
-	in = append(in, n.reg.Values()...)
 
-	// type cast to *Node
+	// selects nodes and perform type cast. needs to verify if element in[i] is of
+	// type *Node because the elements in maps and lists may be a value and not
+	// Node pointer
 	for i, _ := range in {
-		ch = append(ch, in[i].(*Node))
+		switch in[i].(type) {
+		case *Node:
+			ch = append(ch, in[i].(*Node))
+		}
 	}
 	return ch
 }
