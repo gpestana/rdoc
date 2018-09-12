@@ -10,12 +10,6 @@ import (
 	"log"
 )
 
-const (
-	MapT = iota
-	ListT
-	RegT
-)
-
 type Doc struct {
 	Id               string
 	Clock            clock.Clock
@@ -79,7 +73,7 @@ func (d *Doc) ApplyOperation(o op.Operation) (*Doc, error) {
 // input. When a path does not exist in the current document, create the node
 // and link it to the document.
 // The traverse function returns a pointer to the last node, a list of pointers
-// od nodes traversed and a list of pointers of nodes created
+// of nodes traversed and a list of pointers of nodes created
 func (d *Doc) traverse(cursor op.Cursor) (*Node, []*Node, []*Node) {
 	var nPtr *Node
 	var travNodes []*Node
@@ -89,14 +83,12 @@ func (d *Doc) traverse(cursor op.Cursor) (*Node, []*Node, []*Node) {
 
 	for _, c := range cursor.Path {
 		k := c.Get()
-		switch k.(type) {
-		// MapT
-		case string:
-			nodeType := MapT
+		switch c.Type() {
+		case op.MapT:
 			nif, exists := nPtr.hmap.Get(k.(string))
 			if !exists {
 				nn := newNode(k)
-				_ = nPtr.link(nodeType, nn)
+				_ = nPtr.link(op.MapT, nn)
 				nPtr = nn
 				travNodes = append(travNodes, nPtr)
 				createdNodes = append(createdNodes, nPtr)
@@ -105,13 +97,11 @@ func (d *Doc) traverse(cursor op.Cursor) (*Node, []*Node, []*Node) {
 			nPtr = nif.(*Node)
 			travNodes = append(travNodes, nPtr)
 
-		// ListT
-		case int:
-			nodeType := ListT
+		case op.ListT:
 			nif, exists := nPtr.list.Get(k.(int))
 			if !exists {
 				nn := newNode(k)
-				_ = nPtr.link(nodeType, nn)
+				_ = nPtr.link(op.ListT, nn)
 				nPtr = nn
 				travNodes = append(travNodes, nPtr)
 				createdNodes = append(createdNodes, nPtr)
@@ -181,12 +171,17 @@ func (n *Node) Mutate(o op.Operation) error {
 	}
 
 	// 2) modify node if mutation is type Insert or Assign
+	// TODO: refactor this for node.Add(...) which will be implemented at a node
+	// level
 	switch mut.Key.(type) {
 	case int:
 		// list
-		n.list.Insert(mut.Key.(int), mut.Value)
+		nn := newNode(mut.Key)
+		nn.reg.Put(o.ID, mut.Value)
+		n.list.Insert(mut.Key.(int), nn)
 	case string:
 		// map
+		log.Println("mutating a map", mut.Key, o.ID, mut.Value)
 		nn := newNode(mut.Key)
 		nn.reg.Put(o.ID, mut.Value)
 		n.hmap.Put(mut.Key.(string), nn)
@@ -210,21 +205,21 @@ func (n *Node) AddDependency(d string) {
 // type of linking required. It can be of type MapT, ListT or RegT.
 func (n *Node) link(linkType int, node *Node) error {
 	switch linkType {
-	case MapT:
+	case op.MapT:
 		key, ok := node.key.(string)
 		if !ok {
 			return errors.New("Map key must be string")
 		}
 		n.hmap.Put(key, node)
 
-	case ListT:
+	case op.ListT:
 		key, ok := node.key.(int)
 		if !ok {
 			return errors.New("List key must be an int")
 		}
 		n.list.Insert(key, node)
 
-	case RegT:
+	case op.RegT:
 		log.Println("linking RegT")
 	default:
 		return errors.New("linking type not correct")

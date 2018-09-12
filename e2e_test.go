@@ -24,14 +24,12 @@ func TestCaseA(t *testing.T) {
 
 	// constructs and applies locally operation from replica 1
 	mut1, _ := op.NewMutation(op.Assign, "key", "B")
-	op1, _ := op.New(id1+".1", []string{}, emptyC, mut1)
-
+	op1, _ := op.New(id1+".1", []string{id1 + ".0"}, emptyC, mut1)
 	doc1.ApplyOperation(*op1)
 
 	// constructs and applies locally operation for replica 2
 	mut2, _ := op.NewMutation(op.Assign, "key", "C")
-	op2, _ := op.New(id2+".1", []string{}, emptyC, mut2)
-
+	op2, _ := op.New(id2+".1", []string{id1 + ".0"}, emptyC, mut2)
 	doc2.ApplyOperation(*op2)
 
 	// network communication: cross-apply operations in replica 1 and 2
@@ -46,4 +44,5 @@ func TestCaseA(t *testing.T) {
 		t.Error("expected keys do not exist: ", val1, val2)
 	}
 
+	_, _ = val1, val2
 }

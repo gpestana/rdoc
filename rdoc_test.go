@@ -84,21 +84,26 @@ func TestAllChildren(t *testing.T) {
 
 func TestMutateList(t *testing.T) {
 	val := "list_element"
+	oId := "op_x"
 	mut, _ := op.NewMutation(op.Insert, 0, val)
-	o, err := op.New("", []string{}, op.NewCursor("key"), mut)
+	o, err := op.New(oId, []string{}, op.NewCursor("key"), mut)
 	if err != nil {
 		t.Error(err)
 	}
 	node := newNode("key")
 	node.Mutate(*o)
 
+	// get list from head node
 	l := node.GetList()
 	if l.Size() != 1 {
 		t.Error(fmt.Sprintf("List should have lenght 1 after mutation, it has %v", l.Size()))
 	}
-
-	if !l.Contains(val) {
-		t.Error(fmt.Sprintf("List should contain %v after mutation but it does not", val))
+	// get register from head node's list
+	nn, _ := l.Get(0)
+	// check if correct register kv pair exists
+	nreg, _ := nn.(*Node).reg.Get(oId)
+	if nreg != val {
+		t.Error(fmt.Sprintf("List should contain a register with k:v (%v:%v)", oId, val))
 	}
 }
 

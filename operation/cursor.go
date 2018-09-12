@@ -1,5 +1,11 @@
 package operation
 
+const (
+	MapT = iota
+	ListT
+	RegT
+)
+
 // A cursor identifies unambiguous a position in the JSON document by describing
 // the path from the root until the leaf/node selected and the element ID
 type Cursor struct {
@@ -22,6 +28,7 @@ func NewEmptyCursor() Cursor {
 
 type CursorElement interface {
 	Get() interface{}
+	Type() int
 }
 
 type MapKey struct {
@@ -32,10 +39,18 @@ func (k MapKey) Get() interface{} {
 	return k.Key
 }
 
+func (k MapKey) Type() int {
+	return MapT
+}
+
 type ListKey struct {
 	Key int
 }
 
 func (k ListKey) Get() interface{} {
 	return k.Key
+}
+
+func (l ListKey) Type() int {
+	return ListT
 }
