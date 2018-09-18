@@ -28,13 +28,9 @@ func TestNodeConstruction(t *testing.T) {
 		t.Error("Key 0 should exist in n2 list")
 	}
 
-	res, exists := n3r.GetValue("op3")
-	if !exists {
-		t.Error("Key op3 should exist in n3 multi value register")
-	}
-
-	if res.(string) != "world" {
-		t.Error("Register value for operation 'op3' should be 'world', got ", res.(string))
+	mvr := n3r.GetMVRegister()
+	if mvr["op3"] != "world" {
+		t.Error(fmt.Sprintf("Register should be map['op3']:world, got %v", mvr))
 	}
 }
 
@@ -55,7 +51,6 @@ func TestDependenciesMgmt(t *testing.T) {
 	if len(n.deps) != 1 {
 		t.Error(fmt.Sprintf("Node should have 1 dependency after clearing, got %v", len(n.deps)))
 	}
-
 }
 
 func checkError(err error, t *testing.T) {

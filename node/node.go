@@ -63,9 +63,16 @@ func (n *Node) GetChild(k interface{}) (*Node, bool, error) {
 	return nil, false, nil
 }
 
-// returns value from node's multi-value register
-func (n *Node) GetValue(opId string) (interface{}, bool) {
-	return n.reg.Get(opId)
+// returns map with all values associated to a given key. the map is indexed by
+// operation ID - the operation that created the KV pair in first place
+func (n *Node) GetMVRegister() map[string]interface{} {
+	keys := n.reg.Keys()
+	mvrMap := make(map[string]interface{})
+	for _, k := range keys {
+		v, _ := n.reg.Get(k)
+		mvrMap[k.(string)] = v
+	}
+	return mvrMap
 }
 
 // adds a value to the node
@@ -89,24 +96,24 @@ func (n *Node) Add(k interface{}, v interface{}, opId string) error {
 		n.list.Insert(key, node)
 	case nil:
 		// adds to mvregister
-		n.addValueRegister(opId, v)
+		n.reg.Put(opId, v)
 	default:
 		return errors.New("Key type must be of type string (map element), int (list element) or nil (register)")
 	}
 	return nil
 }
 
-// adds register value, indexed based on operation ID. current value type is
-// string or int, otherwise it will return an error
-func (n *Node) addValueRegister(opId string, value interface{}) error {
-	switch value.(type) {
-	case int:
-	case string:
-	default:
-		return errors.New("Value must be either string or int")
+// returns all direct non-leaf children (maps and lists) from node
+func (n *Node) GetChildren() []*Node {
+	var ich []interface{}
+	var ch []*Node
+	ich = append(ich, n.list.Values()...)
+	ich = append(ich, n.hmap.Values()...)
+
+	for i, c := range ich {
+		ch[i] = c.(*Node)
 	}
-	n.reg.Put(opId, value)
-	return nil
+	return ch
 }
 
 func filter(deps []string, dep string) []string {
