@@ -58,3 +58,27 @@ func TestMutateInsert(t *testing.T) {
 	mvr := node.GetMVRegister()
 	fmt.Println(mvr)
 }
+
+func TestClearDeps(t *testing.T) {
+	initDeps := []string{"1", "2", "3", "4"}
+	removeDeps := []string{"2", "4"}
+	node := n.New("test")
+	node.SetDeps(initDeps)
+
+	clearDeps([]*n.Node{node}, removeDeps)
+
+	finalDeps := node.Deps()
+
+	if len(finalDeps) != 2 {
+		t.Error(fmt.Sprintf("Dependency set should have length 2 after clearing, got %v", len(finalDeps)))
+	}
+
+	if finalDeps[0] != initDeps[0] {
+		t.Error(fmt.Sprintf("Dependency set element 0 should be %v after clearing, got %v", initDeps[0], finalDeps[0]))
+	}
+
+	if finalDeps[1] != initDeps[2] {
+		t.Error(fmt.Sprintf("Dependency set element 1 should be %v after clearing, got %v", initDeps[1], finalDeps[2]))
+	}
+
+}

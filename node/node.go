@@ -116,6 +116,14 @@ func (n *Node) GetChildren() []*Node {
 	return ch
 }
 
+func (n *Node) Deps() []string {
+	return n.deps
+}
+
+func (n *Node) SetDeps(deps []string) {
+	n.deps = deps
+}
+
 func filter(deps []string, dep string) []string {
 	ndeps := []string{}
 	for _, d := range deps {

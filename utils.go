@@ -25,6 +25,12 @@ func allChildren(node *n.Node) []*n.Node {
 	return children
 }
 
+func clearDeps(nodes []*n.Node, deps []string) {
+	for _, node := range nodes {
+		node.SetDeps(diff(node.Deps(), deps))
+	}
+}
+
 // checks if `sl` stice contains `id` string
 func containsId(sl []string, id string) bool {
 	for i, _ := range sl {

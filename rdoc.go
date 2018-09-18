@@ -111,21 +111,17 @@ func (d *Doc) traverse(cursor op.Cursor, opId string) (*n.Node, []*n.Node, []*n.
 
 func Mutate(node *n.Node, o op.Operation) error {
 	mut := o.Mutation
-	_ = o.Deps
 
 	switch mut.Type {
 	case op.Delete:
-		// clear ops
-		// TODO: clear all children of opDeps
-		_ = allChildren(node)
+		chs := allChildren(node)
+		clearDeps(chs, o.Deps)
 		return nil
 	case op.Assign:
-		// clear ops
-		// TODO: clear all children of opDeps
-		_ = allChildren(node)
-		// continue to the insertion
+		chs := allChildren(node)
+		clearDeps(chs, o.Deps)
+		// continue to insertion
 	}
-
 	// Insert
 	err := node.Add(mut.Key, mut.Value, o.ID)
 
