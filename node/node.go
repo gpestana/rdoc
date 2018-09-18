@@ -5,106 +5,108 @@ package node
 
 import (
 	"errors"
+	"fmt"
 	"github.com/emirpasic/gods/lists/arraylist"
 	"github.com/emirpasic/gods/maps/hashmap"
+	"reflect"
 )
 
-type Node interface {
-	// adds node dependency
-	AddDependency(string)
-	// clears dependency
-	ClearDependency(string)
-}
-
-// MVRegister element is a multi-value register that holds concrete values in
-// the rdoc structure.
-type MVRegister struct {
+type Node struct {
 	deps []string
+	// operation id that originated the node
 	opId string
-	// keeps the values of the multi-value register as a map, in which keys are
-	// the operation IDs and values the value of the operation mutation
-	values *hashmap.Map
-}
-
-func (r *MVRegister) AddDependency(dep string) {
-	r.deps = append(r.deps, dep)
-}
-
-func (r *MVRegister) ClearDependency(dep string) {
-	r.deps = filter(r.deps, dep)
-}
-
-// adds register value, indexed based on operation ID. current value type is
-// string or int, otherwise it will return an error
-func (r *MVRegister) AddValue(opId string, value interface{}) error {
-	switch value.(type) {
-	case int:
-	case string:
-	default:
-		return errors.New("Value must be either string or int")
-	}
-	r.values.Put(opId, value)
-	return nil
-}
-
-// ListElement is an element of a list which can point to another map, a list
-// and/or a register
-type ListElement struct {
-	deps []string
-	opId string
-	// a list element may be a map
+	// node may be a map
 	hmap *hashmap.Map
-	// a list element may be a list
+	// node may be a list
 	list *arraylist.List
-	// a list element may be a register
-	reg MVRegister
+	// node may be a register
+	reg *hashmap.Map
 }
 
-func (l *ListElement) AddDependency(dep string) {
-	l.deps = append(l.deps, dep)
+func NewNode(opId string) *Node {
+	return &Node{
+		deps: []string{},
+		opId: opId,
+		hmap: hashmap.New(),
+		list: arraylist.New(),
+		reg:  hashmap.New(),
+	}
 }
 
-func (l *ListElement) ClearDependency(dep string) {
-	l.deps = filter(l.deps, dep)
+func (n *Node) AddDependency(dep string) {
+	n.deps = append(n.deps, dep)
 }
 
-// adds a new node to the list
-func (l *ListElement) Add(k interface{}, value interface{}, opId string) error {
+func (n *Node) ClearDependency(dep string) {
+	n.deps = filter(n.deps, dep)
+}
+
+// returns a child node which is part of the list or map
+func (n *Node) GetChild(k interface{}) (*Node, bool, error) {
+	switch key := k.(type) {
+	case string:
+		ni, exists := n.hmap.Get(key)
+		if exists {
+			n := ni.(*Node)
+			return n, exists, nil
+		}
+	case int:
+		ni, exists := n.list.Get(key)
+		if exists {
+			n := ni.(*Node)
+			return n, exists, nil
+		}
+	default:
+		return nil, false, errors.New("Node child is stored in list or map, key must be int or string")
+	}
+	// child with key `k` does not exist
+	return nil, false, nil
+}
+
+// returns value from node's multi-value register
+func (n *Node) GetValue(opId string) (interface{}, bool) {
+	return n.reg.Get(opId)
+}
+
+// adds a value to the node
+func (n *Node) Add(k interface{}, v interface{}, opId string) error {
 	switch key := k.(type) {
 	case string:
 		// adds to map
-		l.hmap.Put(key, node)
+		node, ok := v.(*Node)
+		if !ok {
+			return errors.New(
+				fmt.Sprintf("(map.Add) value must be of type Node. Got instead: (%v", reflect.TypeOf(v)))
+		}
+		n.hmap.Put(key, node)
 	case int:
 		// adds to list
-		l.list.Insert(key, node)
+		node, ok := v.(*Node)
+		if !ok {
+			return errors.New(
+				fmt.Sprintf("(list.Add) value  must be of type Node. Got instead: (%v", reflect.TypeOf(v)))
+		}
+		n.list.Insert(key, node)
 	case nil:
-		// wrong. where is the key??
-		l.reg.Insert(opId, value)
+		// adds to mvregister
+		n.addValueRegister(opId, v)
 	default:
 		return errors.New("Key type must be of type string (map element), int (list element) or nil (register)")
 	}
 	return nil
 }
 
-// MapElement is an element of a map which can point to another map, a list
-// and/or a register
-type MapElement struct {
-	deps []string
-	opId string
-	// a map element may be a map
-	hmap *hashmap.Map
-	// a map element may be a list
-	list *arraylist.List
-	// a map element may be a register
-	reg MVRegister
-}
-
-func (m *MapElement) AddDependency(dep string) {
-	m.deps = append(m.deps, dep)
-}
-
-func (m *MapElement) ClearDependency(dep string) {
-	m.deps = filter(m.deps, dep)
+// adds register value, indexed based on operation ID. current value type is
+// string or int, otherwise it will return an error
+func (n *Node) addValueRegister(opId string, value interface{}) error {
+	switch value.(type) {
+	case int:
+	case string:
+	default:
+		return errors.New("Value must be either string or int")
+	}
+	n.reg.Put(opId, value)
+	return nil
 }
 
 func filter(deps []string, dep string) []string {
@@ -116,7 +118,3 @@ func filter(deps []string, dep string) []string {
 	}
 	return ndeps
 }
-
-var _ Node = (*MVRegister)(nil)
-var _ Node = (*ListElement)(nil)
-var _ Node = (*MapElement)(nil)
