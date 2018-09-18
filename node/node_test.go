@@ -6,7 +6,7 @@ import (
 )
 
 func TestNodeConstruction(t *testing.T) {
-	n1, n2, n3 := NewNode("n1"), NewNode("n2"), NewNode("n3")
+	n1, n2, n3 := New("n1"), New("n2"), New("n3")
 
 	// { "hello": ["world"] }
 	err := n1.Add("hello", n2, "op1")
@@ -39,7 +39,7 @@ func TestNodeConstruction(t *testing.T) {
 }
 
 func TestDependenciesMgmt(t *testing.T) {
-	n := NewNode("node")
+	n := New("node")
 	d1, d2, d3 := "d1", "d2", "d3"
 	n.AddDependency(d1)
 	n.AddDependency(d2)

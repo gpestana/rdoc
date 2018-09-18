@@ -23,7 +23,7 @@ type Node struct {
 	reg *hashmap.Map
 }
 
-func NewNode(opId string) *Node {
+func New(opId string) *Node {
 	return &Node{
 		deps: []string{},
 		opId: opId,
