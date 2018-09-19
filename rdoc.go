@@ -55,7 +55,6 @@ func (d *Doc) ApplyOperation(o op.Operation) (*Doc, error) {
 		n.AddDependency(o.ID)
 	}
 
-	//TODO: let's assume the Mutate() call never fails for now.
 	//TODO: how to rollback side effects of traverse if Mutate() fails?
 	err := Mutate(nPtr, o)
 	if err != nil {
@@ -79,6 +78,7 @@ func (d *Doc) traverse(cursor op.Cursor, opId string) (*n.Node, []*n.Node, []*n.
 	// traverse starts from headNode
 	nPtr = d.Head
 
+	// TODO: refactor
 	for _, c := range cursor.Path {
 		switch c.Type() {
 		case op.MapT:

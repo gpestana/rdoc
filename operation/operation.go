@@ -56,6 +56,5 @@ type Mutation struct {
 
 // Returns new Mutation
 func NewMutation(typ int, k interface{}, v interface{}) (Mutation, error) {
-	// TODO: verify that mutation Value is of type of string or int
 	return Mutation{Type: typ, Key: k, Value: v}, nil
 }

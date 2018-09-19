@@ -124,6 +124,21 @@ func (n *Node) SetDeps(deps []string) {
 	n.deps = deps
 }
 
+// testing purposes only
+func (n *Node) Reg() *hashmap.Map {
+	return n.reg
+}
+
+// testing purposes only
+func (n *Node) Map() *hashmap.Map {
+	return n.hmap
+}
+
+// testing purposes only
+func (n *Node) List() *arraylist.List {
+	return n.list
+}
+
 func filter(deps []string, dep string) []string {
 	ndeps := []string{}
 	for _, d := range deps {

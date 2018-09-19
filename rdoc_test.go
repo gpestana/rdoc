@@ -44,19 +44,22 @@ func TestTraverseSimple(t *testing.T) {
 }
 
 func TestMutateInsert(t *testing.T) {
-	opId := "opBasic"
-	k := "hello"
-	v := "world"
-	mut, _ := op.NewMutation(op.Insert, k, v)
+	opId := "opIdTest"
+	v := "hello world"
+	mut, _ := op.NewMutation(op.Insert, nil, v)
 	op, _ := op.New(opId, []string{}, op.Cursor{}, mut)
 
 	node := n.New("")
 
-	Mutate(node, *op)
+	err := Mutate(node, *op)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	// TODO: finish
 	mvr := node.GetMVRegister()
-	fmt.Println(mvr)
+	if mvr[opId] != v {
+		t.Error(fmt.Sprintf("MVR should be {opIdTest: 'hello world', got %v", mvr))
+	}
 }
 
 func TestClearDeps(t *testing.T) {
