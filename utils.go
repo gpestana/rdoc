@@ -1,21 +1,34 @@
 package rdoc
 
-func directChildren(n *Node) []*Node {
-	var ch []*Node
-	var in []interface{}
-	in = append(in, n.hmap.Values()...)
-	in = append(in, n.list.Values()...)
+import (
+	n "github.com/gpestana/rdoc/node"
+)
 
-	// selects nodes and perform type cast. needs to verify if element in[i] is of
-	// type *Node because the elements in maps and lists may be a value and not
-	// Node pointer
-	for i, _ := range in {
-		switch in[i].(type) {
-		case *Node:
-			ch = append(ch, in[i].(*Node))
+// Returns all subsequent nodes from a particular Node
+func allChildren(node *n.Node) []*n.Node {
+	var children []*n.Node
+	var tmp []*n.Node
+	tmp = append(tmp, node.GetChildren()...)
+
+	for {
+		if len(tmp) == 0 {
+			break
 		}
+		nextTmp := tmp[:1]
+		tmp = tmp[1:]
+
+		c := nextTmp[0]
+		tmp = append(tmp, node.GetChildren()...)
+		children = append(children, c)
 	}
-	return ch
+
+	return children
+}
+
+func clearDeps(nodes []*n.Node, deps []string) {
+	for _, node := range nodes {
+		node.SetDeps(diff(node.Deps(), deps))
+	}
 }
 
 // checks if `sl` stice contains `id` string
@@ -38,12 +51,4 @@ func diff(base []string, subset []string) []string {
 		}
 	}
 	return diff
-}
-
-// clearing nodes consists of removing all operation deps from a node
-// dependencies
-func clearNodes(nodes []*Node, deps []string) {
-	for _, n := range nodes {
-		n.deps = diff(n.deps, deps)
-	}
 }

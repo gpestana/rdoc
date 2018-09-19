@@ -49,13 +49,12 @@ func (op Operation) NodeID() string {
 
 type Mutation struct {
 	// Type of the mutation. Can be one of {insert(v), delete, assign(v)}
-	Typ   int
+	Type  int
 	Key   interface{}
 	Value interface{}
 }
 
 // Returns new Mutation
 func NewMutation(typ int, k interface{}, v interface{}) (Mutation, error) {
-	// TODO: verify that mutation Value is of type of string or int
-	return Mutation{Typ: typ, Key: k, Value: v}, nil
+	return Mutation{Type: typ, Key: k, Value: v}, nil
 }
