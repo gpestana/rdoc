@@ -74,3 +74,5 @@ func TestCaseA(t *testing.T) {
 		t.Error("In doc2, lenght of MVRegister should be 2")
 	}
 }
+
+func TestCaseB(t *testing.T) {}
