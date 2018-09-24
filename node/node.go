@@ -77,21 +77,26 @@ func (n *Node) GetMVRegister() map[string]interface{} {
 
 // adds a value to the node
 func (n *Node) Add(k interface{}, v interface{}, opId string) error {
+	var err error
 	switch key := k.(type) {
 	case string:
 		// adds to map
 		node, ok := v.(*Node)
 		if !ok {
-			return errors.New(
-				fmt.Sprintf("(map.Add) value must be of type Node. Got instead: (%v", reflect.TypeOf(v)))
+			node, err = newNodeWithRegisterValue(v, opId)
+			if err != nil {
+				return err
+			}
 		}
 		n.hmap.Put(key, node)
 	case int:
 		// adds to list
 		node, ok := v.(*Node)
 		if !ok {
-			return errors.New(
-				fmt.Sprintf("(list.Add) value  must be of type Node. Got instead: (%v", reflect.TypeOf(v)))
+			node, err = newNodeWithRegisterValue(v, opId)
+			if err != nil {
+				return err
+			}
 		}
 		n.list.Insert(key, node)
 	case nil:
@@ -147,4 +152,17 @@ func filter(deps []string, dep string) []string {
 		}
 	}
 	return ndeps
+}
+
+// creates a new node with value in register (string or int)
+func newNodeWithRegisterValue(v interface{}, opId string) (*Node, error) {
+	switch v.(type) {
+	case string:
+	case int:
+	default:
+		return nil, errors.New(fmt.Sprintf("register value must be int or string, got %v", reflect.TypeOf(v)))
+	}
+	n := New(opId)
+	n.reg.Put(opId, v)
+	return n, nil
 }

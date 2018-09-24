@@ -13,6 +13,7 @@ const (
 	Insert = iota
 	Delete
 	Assign
+	Noop
 )
 
 type Operation struct {
