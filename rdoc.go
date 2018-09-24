@@ -113,6 +113,8 @@ func Mutate(node *n.Node, o op.Operation) error {
 	mut := o.Mutation
 
 	switch mut.Type {
+	case op.Noop:
+		return nil
 	case op.Delete:
 		chs := allChildren(node)
 		clearDeps(chs, o.Deps)

@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"github.com/emirpasic/gods/lists/arraylist"
 	"github.com/emirpasic/gods/maps/hashmap"
+	"github.com/gpestana/rdoc/clock"
 	"reflect"
+	_ "strconv"
 )
 
 type Node struct {
@@ -77,23 +79,36 @@ func (n *Node) GetMVRegister() map[string]interface{} {
 
 // adds a value to the node
 func (n *Node) Add(k interface{}, v interface{}, opId string) error {
+	var err error
 	switch key := k.(type) {
 	case string:
 		// adds to map
 		node, ok := v.(*Node)
 		if !ok {
-			return errors.New(
-				fmt.Sprintf("(map.Add) value must be of type Node. Got instead: (%v", reflect.TypeOf(v)))
+			node, err = newNodeWithRegisterValue(v, opId)
+			if err != nil {
+				return err
+			}
 		}
 		n.hmap.Put(key, node)
 	case int:
 		// adds to list
 		node, ok := v.(*Node)
 		if !ok {
-			return errors.New(
-				fmt.Sprintf("(list.Add) value  must be of type Node. Got instead: (%v", reflect.TypeOf(v)))
+			node, err = newNodeWithRegisterValue(v, opId)
+			if err != nil {
+				return err
+			}
+		}
+
+		// checks if element in position already exists
+		// if so, calculates proper position for new elemnt in the list
+		_, exists := n.list.Get(key)
+		if exists {
+			key = calculatePositionInsert(n.List(), node, key)
 		}
 		n.list.Insert(key, node)
+
 	case nil:
 		// adds to mvregister
 		n.reg.Put(opId, v)
@@ -147,4 +162,42 @@ func filter(deps []string, dep string) []string {
 		}
 	}
 	return ndeps
+}
+
+// creates a new node with value in register (string or int)
+func newNodeWithRegisterValue(v interface{}, opId string) (*Node, error) {
+	switch v.(type) {
+	case string:
+	case int:
+	default:
+		return nil, errors.New(fmt.Sprintf("register value must be int or string, got %v", reflect.TypeOf(v)))
+	}
+	n := New(opId)
+	n.reg.Put(opId, v)
+	return n, nil
+}
+
+// the real position to insert the element is relative to all operations from
+// the same replica. all operations from same replica are in ascendent order
+func calculatePositionInsert(list *arraylist.List, new *Node, key int) int {
+	newClock, _ := clock.ConvertString(new.opId)
+	var baseIndex int
+
+	calculateBaseIndex := func() int {
+		for baseIndex := 0; baseIndex < list.Size(); baseIndex++ {
+			eif, _ := list.Get(baseIndex)
+			elClock, _ := clock.ConvertString(eif.(*Node).opId)
+
+			// calculate base index (index relative to the other operation elements)
+			if newClock.Timestamp() >= elClock.Timestamp() {
+				fmt.Println(newClock.ID(), elClock.ID())
+				return baseIndex
+			}
+		}
+		return list.Size()
+	}
+
+	baseIndex = calculateBaseIndex()
+	fmt.Println("-> ", baseIndex+key)
+	return baseIndex + key
 }
