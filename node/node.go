@@ -190,7 +190,6 @@ func calculatePositionInsert(list *arraylist.List, new *Node, key int) int {
 
 			// calculate base index (index relative to the other operation elements)
 			if newClock.Timestamp() >= elClock.Timestamp() {
-				fmt.Println(newClock.ID(), elClock.ID())
 				return baseIndex
 			}
 		}
@@ -198,6 +197,5 @@ func calculatePositionInsert(list *arraylist.List, new *Node, key int) int {
 	}
 
 	baseIndex = calculateBaseIndex()
-	fmt.Println("-> ", baseIndex+key)
 	return baseIndex + key
 }
