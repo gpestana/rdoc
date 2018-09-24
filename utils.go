@@ -18,7 +18,7 @@ func allChildren(node *n.Node) []*n.Node {
 		tmp = tmp[1:]
 
 		c := nextTmp[0]
-		tmp = append(tmp, node.GetChildren()...)
+		tmp = append(tmp, c.GetChildren()...)
 		children = append(children, c)
 	}
 

@@ -121,9 +121,10 @@ func (n *Node) Add(k interface{}, v interface{}, opId string) error {
 // returns all direct non-leaf children (maps and lists) from node
 func (n *Node) GetChildren() []*Node {
 	var ich []interface{}
-	var ch []*Node
 	ich = append(ich, n.list.Values()...)
 	ich = append(ich, n.hmap.Values()...)
+
+	ch := make([]*Node, len(ich))
 
 	for i, c := range ich {
 		ch[i] = c.(*Node)
