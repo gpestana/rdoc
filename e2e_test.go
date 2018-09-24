@@ -78,8 +78,11 @@ func TestCaseA(t *testing.T) {
 
 // Case B: Modifying the contents of a nested map while concurrently the entire
 // map is overwritten.
-func TestCaseB(t *testing.T) {
-	id1, id2 := "id1", "id2"
+func TestCaseB(t *testing.T) {}
+
+//Case C:  Two replicas concurrently create ordered lists under the same map keu
+func TestCaseC(t *testing.T) {
+	id1, id2 := "1", "2"
 	doc1 := Init(id1)
 	doc2 := Init(id2)
 
@@ -122,7 +125,7 @@ func TestCaseB(t *testing.T) {
 	}
 
 	curDoc2 = op.NewCursor("groceries", op.MapKey{"groceries"})
-	mutDoc2, _ = op.NewMutation(op.Insert, 0, "flour")
+	mutDoc2, _ = op.NewMutation(op.Insert, 1, "flour")
 	opFlour, _ := op.New(id2+".3", []string{id2 + ".1", id2 + ".2"}, curDoc2, mutDoc2)
 	_, err = doc2.ApplyOperation(*opFlour)
 	if err != nil {
@@ -168,14 +171,17 @@ func TestCaseB(t *testing.T) {
 	}
 
 	// compares list elements order
+	var list1Keys string
+	var list2Keys string
 	for i := 0; i < doc1Groceries.Size(); i++ {
 		el1, _ := doc1Groceries.Get(i)
 		el2, _ := doc2Groceries.Get(i)
 		el1Keys := el1.(*n.Node).Reg().Keys()
 		el2Keys := el2.(*n.Node).Reg().Keys()
-		if el1Keys[0] != el2Keys[0] {
-			t.Error(fmt.Sprintf("Not equal:%v, %v", el1Keys, el2Keys))
-		}
+		list1Keys = fmt.Sprintf("%v %v", list1Keys, el1Keys[0].(string))
+		list2Keys = fmt.Sprintf("%v %v", list2Keys, el2Keys[0].(string))
 	}
-
+	if list1Keys != list2Keys {
+		t.Error(fmt.Sprintf("Final list state did not converge in both replicas: %v != %v", list1Keys, list2Keys))
+	}
 }
