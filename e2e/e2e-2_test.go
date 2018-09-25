@@ -77,10 +77,22 @@ func TestCaseB(t *testing.T) {
 	}
 
 	doc1Blue, _ := doc1Colors.Map().Get("blue")
-	t.Error(doc1Blue)
+	doc1BlueDeps := doc1Blue.(*n.Node).Deps()
+	if len(doc1BlueDeps) != 0 {
+		t.Error("doc1: dependencies of 'blue' must be all cleared, got ", doc1BlueDeps)
+	}
 
 	doc1Red, _ := doc1Colors.Map().Get("red")
-	t.Error(doc1Red)
+	doc1RedDeps := doc1Red.(*n.Node).Deps()
+	if len(doc1RedDeps) == 0 {
+		t.Error("doc1: dependencies of 'red' must NOT be all cleared, got ", doc1RedDeps)
+	}
+
+	doc1Green, _ := doc1Colors.Map().Get("green")
+	doc1GreenDeps := doc1Green.(*n.Node).Deps()
+	if len(doc1GreenDeps) == 0 {
+		t.Error("doc1: dependencies of 'green' must NOT be all cleared, got ", doc1GreenDeps)
+	}
 
 	// doc2: verifications
 	doc2ColorsIf, _ := doc2.Head.Map().Get("colors")
@@ -90,4 +102,21 @@ func TestCaseB(t *testing.T) {
 		t.Error(fmt.Printf("doc2.colors should have 3 elements, got %v", doc2Colors.Map().Size()))
 	}
 
+	doc2Blue, _ := doc2Colors.Map().Get("blue")
+	doc2BlueDeps := doc2Blue.(*n.Node).Deps()
+	if len(doc2BlueDeps) != 0 {
+		t.Error("doc2: dependencies of 'blue' must be all cleared, got ", doc2BlueDeps)
+	}
+
+	doc2Red, _ := doc2Colors.Map().Get("red")
+	doc2RedDeps := doc2Red.(*n.Node).Deps()
+	if len(doc2RedDeps) == 0 {
+		t.Error("doc2: dependencies of 'red' must NOT be all cleared, got ", doc2RedDeps)
+	}
+
+	doc2Green, _ := doc2Colors.Map().Get("green")
+	doc2GreenDeps := doc2Green.(*n.Node).Deps()
+	if len(doc2GreenDeps) == 0 {
+		t.Error("doc2: dependencies of 'green' must NOT be all cleared, got ", doc2GreenDeps)
+	}
 }
