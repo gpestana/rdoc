@@ -124,15 +124,18 @@ func Mutate(node *n.Node, o op.Operation) error {
 		clearDeps(chs, o.Deps)
 		// continue to insertion
 	}
+
 	// Insert
 	newNode, err := node.Add(mut.Key, mut.Value, o.ID)
 
-	// adds dependencies
 	if newNode != nil {
+		// adds dependencies
+		newNode.AddDependency(o.ID)
 		for _, dep := range o.Deps {
 			newNode.AddDependency(dep)
 		}
 	}
+
 	return err
 }
 
