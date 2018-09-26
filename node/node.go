@@ -78,26 +78,28 @@ func (n *Node) GetMVRegister() map[string]interface{} {
 }
 
 // adds a value to the node
-func (n *Node) Add(k interface{}, v interface{}, opId string) error {
+func (n *Node) Add(k interface{}, v interface{}, opId string) (*Node, error) {
 	var err error
+	var ok bool
+	var node *Node
 	switch key := k.(type) {
 	case string:
 		// adds to map
-		node, ok := v.(*Node)
+		node, ok = v.(*Node)
 		if !ok {
 			node, err = newNodeWithRegisterValue(v, opId)
 			if err != nil {
-				return err
+				return node, err
 			}
 		}
 		n.hmap.Put(key, node)
 	case int:
 		// adds to list
-		node, ok := v.(*Node)
+		node, ok = v.(*Node)
 		if !ok {
 			node, err = newNodeWithRegisterValue(v, opId)
 			if err != nil {
-				return err
+				return node, err
 			}
 		}
 
@@ -113,17 +115,19 @@ func (n *Node) Add(k interface{}, v interface{}, opId string) error {
 		// adds to mvregister
 		n.reg.Put(opId, v)
 	default:
-		return errors.New("Key type must be of type string (map element), int (list element) or nil (register)")
+		return nil, errors.New("Key type must be of type string (map element), int (list element) or nil (register)")
 	}
-	return nil
+
+	return node, nil
 }
 
 // returns all direct non-leaf children (maps and lists) from node
 func (n *Node) GetChildren() []*Node {
 	var ich []interface{}
-	var ch []*Node
 	ich = append(ich, n.list.Values()...)
 	ich = append(ich, n.hmap.Values()...)
+
+	ch := make([]*Node, len(ich))
 
 	for i, c := range ich {
 		ch[i] = c.(*Node)

@@ -9,11 +9,11 @@ func TestNodeConstruction(t *testing.T) {
 	n1, n2, n3 := New("n1"), New("n2"), New("n3")
 
 	// { "hello": ["world"] }
-	err := n1.Add("hello", n2, "op1")
+	_, err := n1.Add("hello", n2, "op1")
 	checkError(err, t)
-	err = n2.Add(0, n3, "op2")
+	_, err = n2.Add(0, n3, "op2")
 	checkError(err, t)
-	err = n3.Add(nil, "world", "op3")
+	_, err = n3.Add(nil, "world", "op3")
 	checkError(err, t)
 
 	n2r, exists, err := n1.GetChild("hello")
