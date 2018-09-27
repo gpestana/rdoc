@@ -2,6 +2,7 @@
 package rdoc
 
 import (
+	"fmt"
 	"github.com/gpestana/rdoc"
 	n "github.com/gpestana/rdoc/node"
 	op "github.com/gpestana/rdoc/operation"
@@ -13,45 +14,37 @@ import (
 func TestCaseD(t *testing.T) {
 	id1, id2 := "1", "2"
 	doc1, doc2 := rdoc.Init(id1), rdoc.Init(id2)
-	doc1ops, doc2ops := []*op.Operation{}, []*op.Operation{}
 
 	// doc1: populates head of doc with ["a", "b", "c"]
 	curDoc1 := op.NewEmptyCursor()
 	mutDoc1, _ := op.NewMutation(op.Insert, 0, "a")
 	opInsert1a, _ := op.New(id1+".1", []string{}, curDoc1, mutDoc1)
 	doc1.ApplyOperation(*opInsert1a)
-	doc1ops = append(doc1ops, opInsert1a)
 
 	mutDoc1, _ = op.NewMutation(op.Insert, 1, "b")
 	opInsert1b, _ := op.New(id1+".2", []string{id1 + ".1"}, curDoc1, mutDoc1)
 	doc1.ApplyOperation(*opInsert1b)
-	doc1ops = append(doc1ops, opInsert1b)
 
 	mutDoc1, _ = op.NewMutation(op.Insert, 2, "c")
 	opInsert1c, _ := op.New(id1+".3", []string{id1 + ".1", id1 + ".2"}, curDoc1, mutDoc1)
 	doc1.ApplyOperation(*opInsert1c)
-	doc1ops = append(doc1ops, opInsert1c)
 
 	// doc2: populates head of doc with ["a", "b", "c"] (through sync so that both
 	// replicas have the same state)
-	for _, oper := range doc1ops {
-		doc2.ApplyRemoteOperation(*oper)
-	}
-
-	doc1ops = []*op.Operation{} // clear ops that have been applied
+	doc2.ApplyRemoteOperation(*opInsert1a)
+	doc2.ApplyRemoteOperation(*opInsert1b)
+	doc2.ApplyRemoteOperation(*opInsert1c)
 
 	// doc1: delete element position 1 ("b")
 	curDel := op.NewCursor(1, op.ListKey{1})
 	mutDoc1, _ = op.NewMutation(op.Delete, nil, nil)
 	opDelete1b, _ := op.New(id1+".4", []string{id1 + ".1", id1 + ".2", id1 + ".3"}, curDel, mutDoc1)
 	doc1.ApplyOperation(*opDelete1b)
-	doc1ops = append(doc1ops, opDelete1b)
 
 	// doc1: insert element "x" position 1
 	mutDoc1, _ = op.NewMutation(op.Insert, 1, "x")
 	opInsert1x, _ := op.New(id1+".5", []string{id1 + ".1", id1 + ".2", id1 + ".3", id1 + ".4"}, curDoc1, mutDoc1)
 	doc1.ApplyOperation(*opInsert1x)
-	doc1ops = append(doc1ops, opInsert1x)
 
 	// doc1: initial verifications
 	list1 := doc1.Head.List()
@@ -101,22 +94,18 @@ func TestCaseD(t *testing.T) {
 	mutDoc2, _ := op.NewMutation(op.Insert, 0, "y")
 	opInsert2y, _ := op.New(id2+".1", []string{}, curDoc2, mutDoc2)
 	doc2.ApplyOperation(*opInsert2y)
-	doc2ops = append(doc2ops, opInsert2y)
 
 	// doc2: insert element "z" position 3
 	mutDoc2, _ = op.NewMutation(op.Insert, 3, "z")
 	opInsert2z, _ := op.New(id2+".2", []string{id2 + ".1"}, curDoc2, mutDoc2)
 	doc2.ApplyOperation(*opInsert2z)
-	doc2ops = append(doc2ops, opInsert2z)
 
 	// sync
-	for _, oper := range doc2ops {
-		doc1.ApplyRemoteOperation(*oper)
-	}
+	doc1.ApplyRemoteOperation(*opInsert2y)
+	doc1.ApplyRemoteOperation(*opInsert2z)
 
-	for _, oper := range doc1ops {
-		doc2.ApplyRemoteOperation(*oper)
-	}
+	doc2.ApplyRemoteOperation(*opDelete1b)
+	doc2.ApplyRemoteOperation(*opInsert1x)
 
 	// verifications
 	doc1List := doc1.Head.List()
@@ -144,7 +133,13 @@ func TestCaseD(t *testing.T) {
 		doc2Vals = append(doc2Vals, el.Reg().Values()[0].(string))
 	}
 
-	//t.Error(doc1Vals)
-	//t.Error(doc2Vals)
+	if len(doc1Vals) != len(doc2Vals) {
+		t.Fatal(fmt.Sprintf("Lenght of doc1 and doc2 lists must be the same, got %v vs %v", doc1Vals, doc2Vals))
+	}
 
+	for i := 0; i < len(doc1Vals); i++ {
+		if doc1Vals[i] != doc2Vals[i] {
+			t.Error(fmt.Sprintf("Elements should be ordered equally, got: (%v:%v) vs (%v, %v)", i, doc1Vals[i], i, doc2Vals[i]))
+		}
+	}
 }
