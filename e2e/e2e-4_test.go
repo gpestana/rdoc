@@ -13,41 +13,50 @@ import (
 func TestCaseD(t *testing.T) {
 	id1, id2 := "1", "2"
 	doc1, doc2 := rdoc.Init(id1), rdoc.Init(id2)
+	doc1ops, doc2ops := []*op.Operation{}, []*op.Operation{}
 
 	// doc1: populates head of doc with ["a", "b", "c"]
 	curDoc1 := op.NewEmptyCursor()
 	mutDoc1, _ := op.NewMutation(op.Insert, 0, "a")
-	opInsert1, _ := op.New(id1+".1", []string{}, curDoc1, mutDoc1)
-	doc1.ApplyOperation(*opInsert1)
+	opInsert1a, _ := op.New(id1+".1", []string{}, curDoc1, mutDoc1)
+	doc1.ApplyOperation(*opInsert1a)
+	doc1ops = append(doc1ops, opInsert1a)
 
 	mutDoc1, _ = op.NewMutation(op.Insert, 1, "b")
-	opInsert1, _ = op.New(id1+".2", []string{id1 + ".1"}, curDoc1, mutDoc1)
-	doc1.ApplyOperation(*opInsert1)
+	opInsert1b, _ := op.New(id1+".2", []string{id1 + ".1"}, curDoc1, mutDoc1)
+	doc1.ApplyOperation(*opInsert1b)
+	doc1ops = append(doc1ops, opInsert1b)
 
 	mutDoc1, _ = op.NewMutation(op.Insert, 2, "c")
-	opInsert1, _ = op.New(id1+".3", []string{id1 + ".1", id1 + ".2"}, curDoc1, mutDoc1)
-	doc1.ApplyOperation(*opInsert1)
+	opInsert1c, _ := op.New(id1+".3", []string{id1 + ".1", id1 + ".2"}, curDoc1, mutDoc1)
+	doc1.ApplyOperation(*opInsert1c)
+	doc1ops = append(doc1ops, opInsert1c)
+
+	// doc2: populates head of doc with ["a", "b", "c"] (through sync so that both
+	// replicas have the same state)
+	for _, oper := range doc1ops {
+		doc2.ApplyRemoteOperation(*oper)
+	}
+
+	doc1ops = []*op.Operation{} // clear ops that have been applied
 
 	// doc1: delete element position 1 ("b")
 	curDel := op.NewCursor(1, op.ListKey{1})
 	mutDoc1, _ = op.NewMutation(op.Delete, nil, nil)
-	opInsert1, _ = op.New(id1+".4", []string{id1 + ".1", id1 + ".2", id1 + ".3"}, curDel, mutDoc1)
-	doc1.ApplyOperation(*opInsert1)
+	opDelete1b, _ := op.New(id1+".4", []string{id1 + ".1", id1 + ".2", id1 + ".3"}, curDel, mutDoc1)
+	doc1.ApplyOperation(*opDelete1b)
+	doc1ops = append(doc1ops, opDelete1b)
 
 	// doc1: insert element "x" position 1
 	mutDoc1, _ = op.NewMutation(op.Insert, 1, "x")
-	opInsert1, _ = op.New(id1+".5", []string{id1 + ".1", id1 + ".2", id1 + ".3", id1 + ".4"}, curDoc1, mutDoc1)
-	doc1.ApplyOperation(*opInsert1)
+	opInsert1x, _ := op.New(id1+".5", []string{id1 + ".1", id1 + ".2", id1 + ".3", id1 + ".4"}, curDoc1, mutDoc1)
+	doc1.ApplyOperation(*opInsert1x)
+	doc1ops = append(doc1ops, opInsert1x)
 
 	// doc1: initial verifications
 	list1 := doc1.Head.List()
 
-	for i := 0; i < list1.Size(); i++ {
-		t.Error(list1.Get(i))
-	}
-
 	elA1, _ := list1.Get(0)
-	t.Error(elA1.(*n.Node).Reg())
 	elA1Val, _ := elA1.(*n.Node).Reg().Get("1.1")
 	elA1DepsLen := len(elA1.(*n.Node).Deps())
 	if elA1Val != "a" {
@@ -57,47 +66,85 @@ func TestCaseD(t *testing.T) {
 		t.Error("doc1: element '0:a'  must have 1 dependency, got", elA1DepsLen)
 	}
 
-	elB1, _ := list1.Get(1)
-	t.Error(elB1.(*n.Node).Reg())
+	elX1, _ := list1.Get(1)
+	elX1Val, _ := elX1.(*n.Node).Reg().Get("1.5")
+	elX1DepsLen := len(elX1.(*n.Node).Deps())
+	if elX1Val != "x" {
+		t.Error("doc1: element 1 must be value 'x', got ", elX1Val)
+	}
+	if elX1DepsLen != 5 {
+		t.Error("doc1: element '1:b'  must have 0 dependencies, got", elX1DepsLen)
+	}
+
+	elB1, _ := list1.Get(2)
 	elB1Val, _ := elB1.(*n.Node).Reg().Get("1.2")
 	elB1DepsLen := len(elB1.(*n.Node).Deps())
 	if elB1Val != "b" {
-		t.Error("doc1: element 1 must be value 'b', got ", elB1Val)
+		t.Error("doc1: element 2 must be value 'b', got ", elB1Val)
 	}
 	if elB1DepsLen != 0 {
-		t.Error("doc1: element '1:b'  must have 0 dependencies, got", elB1DepsLen)
+		t.Error("doc1: element '2:b'  must have 0 dependencies, got", elB1DepsLen)
 	}
 
-	elC1, _ := list1.Get(2)
-	t.Error(elC1.(*n.Node).Reg())
+	elC1, _ := list1.Get(3)
 	elC1Val, _ := elC1.(*n.Node).Reg().Get("1.3")
-	elC1DepsLen := len(elB1.(*n.Node).Deps())
+	elC1DepsLen := len(elC1.(*n.Node).Deps())
 	if elC1Val != "c" {
-		t.Error("doc1: element 2 must be value 'c', got ", elC1Val)
+		t.Error("doc1: element 3 must be value 'c', got ", elC1Val)
 	}
 	if elC1DepsLen != 3 {
-		t.Error("doc1: element '2:c'  must have 3 dependencies, got", elC1DepsLen)
+		t.Error("doc1: element '3:c'  must have 3 dependencies, got", elC1DepsLen)
 	}
 
-	// doc2: populates head of doc with ["a", "b", "c"]
-	curDoc2 := op.NewEmptyCursor()
-	mutDoc2, _ := op.NewMutation(op.Insert, 0, "a")
-	opInsert2, _ := op.New(id2+".1", []string{}, curDoc2, mutDoc2)
-	doc2.ApplyOperation(*opInsert2)
-
-	mutDoc2, _ = op.NewMutation(op.Insert, 1, "b")
-	opInsert2, _ = op.New(id2+".2", []string{id1 + ".1"}, curDoc2, mutDoc2)
-	doc2.ApplyOperation(*opInsert2)
-
-	mutDoc2, _ = op.NewMutation(op.Insert, 3, "c")
-	opInsert2, _ = op.New(id2+".2", []string{id1 + ".1", id1 + ".2"}, curDoc2, mutDoc2)
-	doc2.ApplyOperation(*opInsert2)
-
 	// doc2: insert element "y" position 0
-	// doc2: insert element "x" position 3
+	curDoc2 := op.NewEmptyCursor()
+	mutDoc2, _ := op.NewMutation(op.Insert, 0, "y")
+	opInsert2y, _ := op.New(id2+".1", []string{}, curDoc2, mutDoc2)
+	doc2.ApplyOperation(*opInsert2y)
+	doc2ops = append(doc2ops, opInsert2y)
+
+	// doc2: insert element "z" position 3
+	mutDoc2, _ = op.NewMutation(op.Insert, 3, "z")
+	opInsert2z, _ := op.New(id2+".2", []string{id2 + ".1"}, curDoc2, mutDoc2)
+	doc2.ApplyOperation(*opInsert2z)
+	doc2ops = append(doc2ops, opInsert2z)
 
 	// sync
+	for _, oper := range doc2ops {
+		doc1.ApplyRemoteOperation(*oper)
+	}
+
+	for _, oper := range doc1ops {
+		doc2.ApplyRemoteOperation(*oper)
+	}
 
 	// verifications
+	doc1List := doc1.Head.List()
+	doc2List := doc2.Head.List()
+
+	if doc1List.Size() != 6 {
+		t.Error("doc1: size of list must be 6, got ", doc1List.Size())
+	}
+
+	if doc2List.Size() != 6 {
+		t.Error("doc2: size of list must be 6, got ", doc2List.Size())
+	}
+
+	doc1Vals := []string{}
+	for i := 0; i < doc1List.Size(); i++ {
+		e, _ := list1.Get(i)
+		el := e.(*n.Node)
+		doc1Vals = append(doc1Vals, el.Reg().Values()[0].(string))
+	}
+
+	doc2Vals := []string{}
+	for i := 0; i < doc2List.Size(); i++ {
+		e, _ := doc2List.Get(i)
+		el := e.(*n.Node)
+		doc2Vals = append(doc2Vals, el.Reg().Values()[0].(string))
+	}
+
+	//t.Error(doc1Vals)
+	//t.Error(doc2Vals)
 
 }
