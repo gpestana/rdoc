@@ -117,11 +117,15 @@ func Mutate(node *n.Node, o op.Operation) error {
 		return nil
 	case op.Delete:
 		chs := allChildren(node)
-		clearDeps(chs, o.Deps)
+		// nodes to clear are children and node itself
+		all := append(chs, node)
+		clearDeps(all, o.Deps)
 		return nil
 	case op.Assign:
 		chs := allChildren(node)
-		clearDeps(chs, o.Deps)
+		// nodes to clear are children and node itself
+		all := append(chs, node)
+		clearDeps(all, o.Deps)
 		// continue to insertion
 	}
 
