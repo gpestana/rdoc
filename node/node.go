@@ -1,4 +1,3 @@
-// low level package that manages rdoc nodes. the node primitives are used
 // mainly by rdoc.Mutate() when applying mutations and rdoc.Traverse() when
 // traversing the tree
 package node
@@ -193,7 +192,7 @@ func calculatePositionInsert(list *arraylist.List, new *Node, key int) int {
 			elClock, _ := clock.ConvertString(eif.(*Node).opId)
 
 			// calculate base index (index relative to the other operation elements)
-			if newClock.Timestamp() >= elClock.Timestamp() {
+			if newClock.Timestamp() > elClock.Timestamp() {
 				return baseIndex
 			}
 		}

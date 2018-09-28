@@ -3,6 +3,7 @@ package rdoc
 
 import (
 	"fmt"
+	"github.com/emirpasic/gods/lists/arraylist"
 	"github.com/gpestana/rdoc"
 	n "github.com/gpestana/rdoc/node"
 	op "github.com/gpestana/rdoc/operation"
@@ -92,18 +93,17 @@ func TestCaseD(t *testing.T) {
 	// doc2: insert element "y" position 0
 	curDoc2 := op.NewEmptyCursor()
 	mutDoc2, _ := op.NewMutation(op.Insert, 0, "y")
-	opInsert2y, _ := op.New(id2+".1", []string{}, curDoc2, mutDoc2)
+	opInsert2y, _ := op.New(id2+".4", []string{id1 + ".1", id1 + ".2", id1 + ".3"}, curDoc2, mutDoc2)
 	doc2.ApplyOperation(*opInsert2y)
 
 	// doc2: insert element "z" position 3
-	mutDoc2, _ = op.NewMutation(op.Insert, 3, "z")
-	opInsert2z, _ := op.New(id2+".2", []string{id2 + ".1"}, curDoc2, mutDoc2)
+	mutDoc2, _ = op.NewMutation(op.Insert, 2, "z")
+	opInsert2z, _ := op.New(id2+".5", []string{id1 + ".1", id1 + ".2", id1 + ".3", id2 + ".4"}, curDoc2, mutDoc2)
 	doc2.ApplyOperation(*opInsert2z)
 
 	// sync
 	doc1.ApplyRemoteOperation(*opInsert2y)
 	doc1.ApplyRemoteOperation(*opInsert2z)
-
 	doc2.ApplyRemoteOperation(*opDelete1b)
 	doc2.ApplyRemoteOperation(*opInsert1x)
 
@@ -119,19 +119,8 @@ func TestCaseD(t *testing.T) {
 		t.Error("doc2: size of list must be 6, got ", doc2List.Size())
 	}
 
-	doc1Vals := []string{}
-	for i := 0; i < doc1List.Size(); i++ {
-		e, _ := list1.Get(i)
-		el := e.(*n.Node)
-		doc1Vals = append(doc1Vals, el.Reg().Values()[0].(string))
-	}
-
-	doc2Vals := []string{}
-	for i := 0; i < doc2List.Size(); i++ {
-		e, _ := doc2List.Get(i)
-		el := e.(*n.Node)
-		doc2Vals = append(doc2Vals, el.Reg().Values()[0].(string))
-	}
+	doc1Vals := getListValues(doc1List)
+	doc2Vals := getListValues(doc2List)
 
 	if len(doc1Vals) != len(doc2Vals) {
 		t.Fatal(fmt.Sprintf("Lenght of doc1 and doc2 lists must be the same, got %v vs %v", doc1Vals, doc2Vals))
@@ -139,7 +128,17 @@ func TestCaseD(t *testing.T) {
 
 	for i := 0; i < len(doc1Vals); i++ {
 		if doc1Vals[i] != doc2Vals[i] {
-			t.Error(fmt.Sprintf("Elements should be ordered equally, got: (%v:%v) vs (%v, %v)", i, doc1Vals[i], i, doc2Vals[i]))
+			t.Error(fmt.Sprintf("Elements should be ordered equally, got: (%v:%v) vs (%v, %v) l1: %v; l2: %v", i, doc1Vals[i], i, doc2Vals[i], doc1Vals, doc2Vals))
 		}
 	}
+}
+
+func getListValues(l *arraylist.List) []string {
+	vals := []string{}
+	for i := 0; i < l.Size(); i++ {
+		e, _ := l.Get(i)
+		el := e.(*n.Node)
+		vals = append(vals, el.Reg().Values()[0].(string))
+	}
+	return vals
 }
