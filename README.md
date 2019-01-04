@@ -25,27 +25,11 @@ CRDT JSON data structure. To manipulate the data structure, the user creates
 operations and calls the `ApplyOperation`  structure method. 
 
 The user interface with the expected getters and setters will sit between the
-user and document interface and it will be defined an worked on later.
+user and document interface and it will be defined an worked on later. 
 
-Example using the document interface:
-
-```go
-doc := rdoc.Init() // initializes a new rdoc
-
-deps := []string{...}
-opID := "..."
-mutation := operation.NewMutation(...)
-cursor := operation.NewCursor(...)
-
-op := operation.New(id, deps, cursor, mutation)
-
-doc2 := doc.ApplyOperation(op)
-
-remoteOp := operation.Operation{}
-receiveRemoteOperation(&remoteOp) // receives remote operation
-
-doc3 := doc=4.ApplyRemoteOperation(remoteOp)
-```
+**The user interface is not developed yet, but you can use the document
+interface which is a lower level API.** Check the end to [end tests](./e2e) to 
+see how to use the lower level API to manipulate and sync JSON CRDT documents. 
 
 Check the [internal specifications](./SPECS.md) if you are interested in
 contributing and/or understanding the implementation details and mechanics of 
@@ -55,6 +39,11 @@ the `rdoc` data structure.
 
 A good discussion and suggestions of CRDT uses can be found in the 
 [research-CRDT repository maintained by IPFS](https://github.com/ipfs/research-CRDT/issues/1)
+
+
+## Contributing
+
+Just go ahead and open issues, PRs and help reviewing code :)
 
 ## License
 
