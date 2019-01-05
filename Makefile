@@ -8,5 +8,5 @@ build:
 	go build .
 
 test: 
-	go tool vet .
+	go vet .
 	go test ./... -cover

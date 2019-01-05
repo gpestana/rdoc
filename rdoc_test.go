@@ -13,9 +13,9 @@ func TestTraverseSimple(t *testing.T) {
 
 	cursor1 := op.NewCursor(
 		0, // cursor's key
-		op.MapKey{"root"},
-		op.MapKey{"sub-node"},
-		op.ListKey{0},
+		op.MapKey{Key: "root"},
+		op.MapKey{Key: "sub-node"},
+		op.ListKey{Key: 0},
 	)
 
 	n1, trvN, crtN := doc.traverse(cursor1, "oId")
