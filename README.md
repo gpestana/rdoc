@@ -28,7 +28,7 @@ The user interface with the expected getters and setters will sit between the
 user and document interface and it will be defined an worked on later. 
 
 **The user interface is not developed yet, but you can use the document
-interface which is a lower level API.** Check the end to [end tests](./e2e) to 
+interface which is a lower level API.** Check the [end to end tests](./e2e) to 
 see how to use the lower level API to manipulate and sync JSON CRDT documents. 
 
 Check the [internal specifications](./SPECS.md) if you are interested in
