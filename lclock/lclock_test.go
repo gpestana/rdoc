@@ -1,4 +1,4 @@
-package clock
+package lclock
 
 import (
 	"fmt"
@@ -53,7 +53,10 @@ func TestString(t *testing.T) {
 func TestUpdateClock(t *testing.T) {
 	clk1 := New([]byte("clk1"))
 
-	clk1.Update("123.321")
+	err := clk1.Update("123.321")
+	if err != nil {
+		t.Error(err)
+	}
 	if clk1.count != 123 {
 		t.Error(fmt.Sprintf("Clock count should be: 123, had  %v", clk1.count))
 	}
@@ -64,17 +67,33 @@ func TestUpdateClockString(t *testing.T) {
 	clk2 := New([]byte("clk2"))
 
 	clk1.Tick()
-	clk2.Update(clk1)
+	err := clk2.Update(clk1)
+	if err != nil {
+		t.Error(err)
+	}
+
 	if clk2.count != 2 {
 		t.Error(fmt.Sprintf("Clock 2 should have same count as Clock 1: %v != %v", clk1.count, clk2.count))
 	}
 
 	clk2.Tick()
 	clk2.Tick()
-	clk1.Update(clk2)
-	// test also idempotent update
-	clk1.Update(clk2)
-	clk1.Update(clk2)
+
+	err = clk1.Update(clk2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = clk1.Update(clk2)
+	if err != nil {
+		t.Error(err)
+	}
+
+	err = clk1.Update(clk2)
+	if err != nil {
+		t.Error(err)
+	}
+
 	if clk1.count != 4 {
 		t.Error(fmt.Sprintf("Clock 2 should have same count as Clock 1: %v != %v", clk1.count, clk2.count))
 	}

@@ -1,12 +1,5 @@
-all: test build
-ci: pre-build test
+tests:
+	go test ./... -v -cover
 
-pre-build:
-	go get .
-
-build:
-	go build .
-
-test: 
-	go vet .
-	go test ./... -cover
+lint:
+	golangci-lint run -E gofmt -E golint --exclude-use-default=false

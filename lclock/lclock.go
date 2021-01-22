@@ -1,26 +1,29 @@
-// Lamport timestamp implementation. Every operation has an unique ID in the
-// network. Lamport timestamps ensure that if two operarations in different
+// Package lclock implements Lamport logical clocks, with helps to be used in
+// the context of rdocEvery operation has an unique ID in the
+// network. Lamport timestamps ensure that if two operations in different
 // network nodes have occurred concurrently, their order is arbitrary but
 // deterministic
-package clock
+package lclock
 
 import (
+	"fmt"
 	"hash/adler32"
 	"strconv"
 	"strings"
 )
 
 const (
-	BASE = 10
+	base = 10
 )
 
+// Clock holds a Lamport logical clock
 type Clock struct {
 	seed  int64
 	count int64
 }
 
-// Initializes a clock. The `seed` is a string which uniquely identifies the
-// clock in the network
+// New initializes and returns a new clock. The `seed` is a string which
+// uniquely identifies the clock in the network
 func New(seed []byte) Clock {
 	s := adler32.Checksum(seed)
 	return Clock{
@@ -29,24 +32,25 @@ func New(seed []byte) Clock {
 	}
 }
 
+// ID returns the id of the clock
 func (c *Clock) ID() string {
 	return strconv.FormatInt(c.seed, 10)
 }
 
-// Increments Clock count
+// Tick increments the clock counter
 func (c *Clock) Tick() {
 	c.count++
 }
 
-// Returns Timestamp that uniquely identifies the state (clock and count) in the
-// network
+// Timestamp returns a timestamp that  uniquely identifies the state (id and
+// counter) in the network
 func (c Clock) Timestamp() string {
 	return c.String()
 }
 
-// Updates a Clock based on another clock or string representation. If the
-// current Clock count.seed value is higher, no changes are done. Othwerise, the
-// clock updates to the upper count
+// Update performs a clock update based on another clock or string
+// representation. If the current Clock count.seed value is higher, no
+// changes are done. Othwerise, the clock updates to the upper count
 func (c *Clock) Update(rcv interface{}) error {
 	var err error
 	rcvC := Clock{}
@@ -77,6 +81,18 @@ func (c *Clock) Update(rcv interface{}) error {
 	return nil
 }
 
+// CheckTick checks if tick belongs to the clock, or if tick representation is
+// invalid
+func (c Clock) CheckTick(tick string) (bool, error) {
+	tickClock, err := strToClock(tick)
+	if err != nil {
+		return false,
+			fmt.Errorf("Operation ID invalid. Expected <counter>.<seed>, got %v", tick)
+	}
+
+	return c.ID() == tickClock.ID(), nil
+}
+
 // Returns the canonical value of clock. The canonical value of the logical
 // clock is a float64 type in the form of <Clock.count>.<Clock.seed>. The
 // Clock.seed value must be unique per Clock in the network.
@@ -105,12 +121,13 @@ func strToClock(s string) (Clock, error) {
 }
 
 func (c *Clock) String() string {
-	cnt := strconv.FormatInt(c.count, BASE)
-	sd := strconv.FormatInt(c.seed, BASE)
+	cnt := strconv.FormatInt(c.count, base)
+	sd := strconv.FormatInt(c.seed, base)
 	return cnt + "." + sd
 }
 
-// Convert string to Clock
+// ConvertString converts a string to a clock representation, or returns an
+// error if string representation is invalid
 func ConvertString(c string) (Clock, error) {
 	return strToClock(c)
 }

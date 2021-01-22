@@ -1,0 +1,7 @@
+github.com/evanphx/json-patch v0.5.2 h1:xVCHIVMUu1wtM/VkR9jVZ45N3FhZfYMMYGorLCR8P3k=
+github.com/evanphx/json-patch v0.5.2/go.mod h1:ZWS5hhDbVDyob71nXKNL0+PWn6ToqBHMikGIFbs31qQ=
+github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
+github.com/lafikl/hlc v0.0.0-20170703083803-0610e7fd8181 h1:vYJjPjoqLvEt/yI2p0h4Y3xTZb62yR+xpt2JfocUrNw=
+github.com/lafikl/hlc v0.0.0-20170703083803-0610e7fd8181/go.mod h1:DW4KbeN1bUFkHdmRAI/M3NCHnVTP377hTvRwdG8rsDo=
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

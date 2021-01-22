@@ -1,151 +1,200 @@
 package rdoc
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/gpestana/rdoc/clock"
-	n "github.com/gpestana/rdoc/node"
-	op "github.com/gpestana/rdoc/operation"
+	"strings"
+
+	jpatch "github.com/evanphx/json-patch"
+	"github.com/gpestana/rdoc/idset"
+	"github.com/gpestana/rdoc/lclock"
 )
 
+// Doc represents a JSON CRDT document
 type Doc struct {
-	Id               string
-	Clock            clock.Clock
-	OperationsId     []string
-	Head             *n.Node
-	OperationsBuffer []op.Operation
+	id                 string
+	appliedIDs         *idset.Set
+	clock              lclock.Clock
+	operations         []Operation
+	bufferedOperations map[string]Operation
 }
 
-// Returns a new rdoc data structure. It receives an ID which must be
-// unique in the context of the network.
+// Init returns a new JSON CRDT document
 func Init(id string) *Doc {
-	headNode := n.New("")
-	c := clock.New([]byte(id))
+
 	return &Doc{
-		Id:               id,
-		Clock:            c,
-		OperationsId:     []string{},
-		Head:             headNode,
-		OperationsBuffer: []op.Operation{},
+		id:                 id,
+		appliedIDs:         idset.New(),
+		clock:              lclock.New([]byte(id)),
+		operations:         []Operation{},
+		bufferedOperations: map[string]Operation{},
 	}
 }
 
-func (d *Doc) ApplyRemoteOperation(o op.Operation) (*Doc, error) {
-	// if operation has been applied already, skip
-	if containsId(d.OperationsId, o.ID) {
-		return d, nil
-	}
-	// if operation dependencies havent been all applied in the document, buffer
-	// the operation
-	missingOp := diff(o.Deps, d.OperationsId)
-	if len(missingOp) != 0 {
-		d.OperationsBuffer = append(d.OperationsBuffer, o)
-		return d, nil
-	}
-	return d.ApplyOperation(o)
-}
-
-func (d *Doc) ApplyOperation(o op.Operation) (*Doc, error) {
-	nPtr, travNodes, createdNodes := d.traverse(o.Cursor, o.ID)
-
-	// updates dependencies of traversed and created nodes
-	var deps []*n.Node
-	deps = append(deps, travNodes...)
-	deps = append(deps, createdNodes...)
-	for _, n := range deps {
-		n.AddDependency(o.ID)
-	}
-
-	//TODO: how to rollback side effects of traverse if Mutate() fails?
-	err := Mutate(nPtr, o)
+// Apply applies a valid json patch on the document
+func (doc *Doc) Apply(rawPatch []byte) error {
+	patch, err := jpatch.DecodePatch(rawPatch)
 	if err != nil {
-		return d, err
+		return err
 	}
 
-	d.OperationsId = append(d.OperationsId, o.ID)
-	return d, nil
-}
+	appliedRemoteOperations := false
 
-// Traverses the document from root element to the node indicated by the cursor
-// input. When a path does not exist in the current document, create the node
-// and link it to the document.
-// The traverse function returns a pointer to the last node, a list of pointers
-// of nodes traversed and a list of pointers of nodes created
-func (d *Doc) traverse(cursor op.Cursor, opId string) (*n.Node, []*n.Node, []*n.Node) {
-	var nPtr *n.Node
-	var travNodes []*n.Node
-	var createdNodes []*n.Node
+	for _, opRaw := range patch {
+		op, err := operationFromPatch(opRaw)
+		if err != nil {
+			return err
+		}
 
-	// traverse starts from headNode
-	nPtr = d.Head
+		isFromSameClock, err := doc.clock.CheckTick(op.id)
+		if err != nil {
+			return err
+		}
 
-	// TODO: refactor
-	for _, c := range cursor.Path {
-		switch c.Type() {
-		case op.MapT:
-			k := c.Get().(string)
-			nn, exists, _ := nPtr.GetChild(k)
-			if !exists {
-				nn = n.New(opId)
-				nPtr.Add(k, nn, opId)
-				createdNodes = append(createdNodes, nn)
-			} else {
-				travNodes = append(travNodes, nPtr)
-			}
-			nPtr = nn
-		case op.ListT:
-			k := c.Get().(int)
-			nn, exists, _ := nPtr.GetChild(k)
-			if !exists {
-				nn = n.New(opId)
-				nPtr.Add(k, nn, opId)
-				createdNodes = append(createdNodes, nn)
-			} else {
-				travNodes = append(travNodes, nPtr)
-			}
-			nPtr = nn
+		// apply local operations and continues
+		if isFromSameClock {
+			doc.applyOperation(*op)
+			continue
+		}
+
+		// attempts to apply remote operations by checking if all operation
+		// dependencies have been applied on the doc
+		if len(doc.appliedIDs.Diff(op.deps)) != 0 {
+			doc.bufferedOperations[op.id] = *op
+		} else {
+			appliedRemoteOperations = true
+			delete(doc.bufferedOperations, op.id) // remove buffered operation in case it was buffered
+			doc.applyOperation(*op)
 		}
 	}
 
-	return nPtr, travNodes, createdNodes
-}
-
-func Mutate(node *n.Node, o op.Operation) error {
-	mut := o.Mutation
-
-	switch mut.Type {
-	case op.Noop:
-		return nil
-	case op.Delete:
-		chs := allChildren(node)
-		// nodes to clear are children and node itself
-		all := append(chs, node)
-		clearDeps(all, o.Deps)
-		return nil
-	case op.Assign:
-		chs := allChildren(node)
-		// nodes to clear are children and node itself
-		all := append(chs, node)
-		clearDeps(all, o.Deps)
-		// continue to insertion
+	// if remote operation hasbeen applied, attemps to apply buffered operations
+	if appliedRemoteOperations {
+		doc.tryBufferedOperations()
 	}
 
-	// Insert
-	newNode, err := node.Add(mut.Key, mut.Value, o.ID)
+	return nil
+}
 
-	if newNode != nil {
-		// adds dependencies
-		newNode.AddDependency(o.ID)
-		for _, dep := range o.Deps {
-			newNode.AddDependency(dep)
+func (doc *Doc) applyOperation(operation Operation) {
+	doc.appliedIDs.Add(operation.id)
+	doc.operations = append(doc.operations, operation)
+}
+
+func (doc *Doc) tryBufferedOperations() {
+	buffer, err := doc.MarshalFullJSON()
+	if err != nil {
+		panic(fmt.Sprintf("Buffered operations are not valid -- this should never happen: %v\n", err))
+	}
+
+	err = doc.Apply(buffer)
+	if err != nil {
+		panic(fmt.Sprintf("Error applying buffered operations -- this should never happen: %v\n", err))
+	}
+}
+
+// MarshalJSON marshals a Doc into a buffer, excluding the deps field on each
+// operation
+func (doc Doc) MarshalJSON() ([]byte, error) {
+	type operationNoDeps struct {
+		ID    string      `json:"id"`
+		Op    string      `json:"op"`
+		Path  string      `json:"path"`
+		Value interface{} `json:"value"`
+	}
+
+	buffer := []operationNoDeps{}
+
+	for _, operation := range doc.operations {
+		path, err := operation.raw.Path()
+		if err != nil {
+			return nil, err
 		}
-	}
+		value, err := operation.raw.ValueInterface()
+		if err != nil {
+			return nil, err
+		}
 
-	return err
+		opNoDeps := operationNoDeps{
+			ID:    operation.id,
+			Op:    operation.raw.Kind(),
+			Path:  path,
+			Value: value,
+		}
+
+		buffer = append(buffer, opNoDeps)
+	}
+	return json.Marshal(buffer)
 }
 
-func (d Doc) String() string {
-	ids := fmt.Sprintf("ID: %v; ClockId: %v", d.Id, d.Clock)
-	ops := fmt.Sprintf("Operations: applied: %v, buffered: %v", d.OperationsId, d.OperationsBuffer)
-	node := fmt.Sprintf("Head: %v", d.Head)
-	return fmt.Sprintf("%v\n%v\n%v\n", ids, ops, node)
+// MarshalFullJSON marshals a Doc into a buffer, including the dependencies
+// field
+func (doc Doc) MarshalFullJSON() ([]byte, error) {
+	type operationNoDeps struct {
+		ID    string      `json:"id"`
+		Op    string      `json:"op"`
+		Path  string      `json:"path"`
+		Deps  []string    `json:"deps"`
+		Value interface{} `json:"value"`
+	}
+
+	buffer := []operationNoDeps{}
+
+	for _, operation := range doc.operations {
+		path, err := operation.raw.Path()
+		if err != nil {
+			return nil, err
+		}
+		value, err := operation.raw.ValueInterface()
+		if err != nil {
+			return nil, err
+		}
+
+		opNoDeps := operationNoDeps{
+			ID:    operation.id,
+			Deps:  operation.deps,
+			Op:    operation.raw.Kind(),
+			Path:  path,
+			Value: value,
+		}
+
+		buffer = append(buffer, opNoDeps)
+	}
+	return json.Marshal(buffer)
+}
+
+// Operation represents the CRDT operations
+type Operation struct {
+	id   string
+	deps []string
+	raw  jpatch.Operation
+}
+
+func operationFromPatch(rawOp jpatch.Operation) (*Operation, error) {
+	rawID := rawOp["id"]
+	if rawID == nil {
+		return nil,
+			fmt.Errorf("Operation must have an associated id, got: %v", rawID)
+	}
+	id := string(*rawID)
+	id = strings.TrimSuffix(id, "\"")
+	id = strings.TrimPrefix(id, "\"")
+
+	rawDeps := rawOp["deps"]
+	if rawDeps == nil {
+		return nil,
+			fmt.Errorf("Operation must have an associated dependency, got: %v", rawDeps)
+	}
+
+	deps := new([]string)
+	err := json.Unmarshal(*rawDeps, deps)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Operation{
+		id:   id,
+		deps: *deps,
+		raw:  rawOp,
+	}, nil
 }
