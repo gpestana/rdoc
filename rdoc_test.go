@@ -7,15 +7,15 @@ import (
 	jsonp "github.com/evanphx/json-patch"
 )
 
-func TestApply(t *testing.T) {
+func TestApplyAndMarshall(t *testing.T) {
 
 	patch := []byte(`[
-{"op": "add", "path": "/", "value": "user", "id":"1.1", "deps": [] },
+{"op": "add", "path": "/", "value": "user", "id":"1.380503024", "deps": [] },
 {"op": "add", "path": "/name", "value": "Jane", "id":"2.1", "deps": ["1.1"] },
-{"op": "add", "path": "/name", "value": "Jane", "id":"1.380503024", "deps": [""] }
+{"op": "add", "path": "/name", "value": "Jane", "id":"2.380503024", "deps": ["1.380503024"] }
 ]`)
 
-	expectedPatchAfterMarshaling := []byte(`[{"id":"1.1","op":"add","path":"/","value":"user"},{"id":"2.1","op":"add","path":"/name","value":"Jane"},{"id":"1.380503024","op":"add","path":"/name","value":"Jane"}]`)
+	expectedPatchAfterMarshaling := []byte(`[{"id":"1.380503024","op":"add","path":"/","value":"user"},{"id":"2.380503024","op":"add","path":"/name","value":"Jane"}]`)
 
 	doc := Init("document_1")
 
