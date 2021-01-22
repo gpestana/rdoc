@@ -29,7 +29,7 @@ func Init(id string) *Doc {
 }
 
 // Apply applies a valid json patch on the document
-func (doc Doc) Apply(rawPatch []byte) error {
+func (doc *Doc) Apply(rawPatch []byte) error {
 	patch, err := jpatch.DecodePatch(rawPatch)
 	if err != nil {
 		return err
@@ -51,7 +51,8 @@ func (doc Doc) Apply(rawPatch []byte) error {
 			fmt.Println("Local operation")
 		}
 
-		fmt.Println(op)
+		// when/where to append?
+		doc.operations = append(doc.operations, *op)
 	}
 
 	return nil
@@ -59,7 +60,35 @@ func (doc Doc) Apply(rawPatch []byte) error {
 
 // MarshalJSON marshals a buffer into a crdt doc
 func (doc Doc) MarshalJSON() ([]byte, error) {
-	return nil, nil
+	type operationNoDeps struct {
+		ID    string      `json:"id"`
+		Op    string      `json:"op"`
+		Path  string      `json:"path"`
+		Value interface{} `json:"value"`
+	}
+
+	buffer := []operationNoDeps{}
+
+	for _, operation := range doc.operations {
+		path, err := operation.raw.Path()
+		if err != nil {
+			return nil, err
+		}
+		value, err := operation.raw.ValueInterface()
+		if err != nil {
+			return nil, err
+		}
+
+		opNoDeps := operationNoDeps{
+			ID:    operation.id,
+			Op:    operation.raw.Kind(),
+			Path:  path,
+			Value: value,
+		}
+
+		buffer = append(buffer, opNoDeps)
+	}
+	return json.Marshal(buffer)
 }
 
 // Operation represents the CRDT operations
