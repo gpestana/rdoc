@@ -1,8 +1,10 @@
 # rdoc
 
-[![Build Status](https://travis-ci.org/gpestana/rdoc.svg?branch=master)](https://travis-ci.org/gpestana/rdoc) [![Go Reference](https://pkg.go.dev/badge/github.com/gpestana/rdoc.svg)](https://pkg.go.dev/github.com/gpestana/rdoc) [![Package Version](https://img.shields.io/github/v/tag/gpestana/rdoc)](https://img.shields.io/github/v/tag/gpestana/rdoc)
+### Build better decentralized and offline-first application in Go
 
-**rdoc - Build better decentralized and offline-first application in Go** 
+[![Build Status](https://travis-ci.org/gpestana/rdoc.svg?branch=master)](https://travis-ci.org/gpestana/rdoc) [![Package Version](https://img.shields.io/github/v/tag/gpestana/rdoc)](https://img.shields.io/github/v/tag/gpestana/rdoc)
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/gpestana/rdoc.svg)](https://pkg.go.dev/github.com/gpestana/rdoc)
 
 rdoc is a native go implementation of a conflict-free replicated JSON data structure, as introduced by Martin Kleppmann and Alastair R. Beresford in their seminal work [1]. A JSON CRDT is "[...] an algorithm and formal semantics for a JSON data structure that automatically resolves concurrent modifications such that no updates are lost, and such that all replicas converge towards the same state (a conflict-free replicated datatype or CRDT)." [1];
 
@@ -40,6 +42,15 @@ err := doc.Apply(remotePath)
 if err != nil {
     panic(err)
 }
+
+// Get Doc operations to sent over the wire to merge into other replicas
+doc1Operations := doc.Operations()
+
+// ... apply state from doc1 into doc2, in order for replicas to converge
+
+doc2.Apply(doc1Operations)
+
+// ...
 
 // Native Go marshaling/unmarshaling supported 
 buffer, err := json.Marshal(*doc)

@@ -97,12 +97,12 @@ func (doc *Doc) applyOperation(operation Operation) {
 }
 
 func (doc *Doc) tryBufferedOperations() {
-	buffer, err := doc.MarshalFullJSON()
+	bufferedOperations, err := doc.marshalBufferedOperations()
 	if err != nil {
-		panic(fmt.Sprintf("Buffered operations are not valid -- this should never happen: %v\n", err))
+		panic(fmt.Sprintf("Error marshalling buffered operations -- this should never happen: %v\n", err))
 	}
 
-	err = doc.Apply(buffer)
+	err = doc.Apply(bufferedOperations)
 	if err != nil {
 		panic(fmt.Sprintf("Error applying buffered operations -- this should never happen: %v\n", err))
 	}
@@ -154,7 +154,7 @@ func (doc Doc) MarshalJSON() ([]byte, error) {
 // MarshalFullJSON marshals a Doc into a buffer, including the dependencies
 // field of each operation.
 func (doc Doc) MarshalFullJSON() ([]byte, error) {
-	type operationNoDeps struct {
+	type operation struct {
 		ID    string      `json:"id"`
 		Op    string      `json:"op"`
 		Path  string      `json:"path"`
@@ -162,9 +162,43 @@ func (doc Doc) MarshalFullJSON() ([]byte, error) {
 		Value interface{} `json:"value"`
 	}
 
-	buffer := []operationNoDeps{}
+	buffer := []operation{}
 
-	for _, operation := range doc.operations {
+	for _, op := range doc.operations {
+		path, err := op.raw.Path()
+		if err != nil {
+			return nil, err
+		}
+		value, err := op.raw.ValueInterface()
+		if err != nil {
+			return nil, err
+		}
+
+		structOp := operation{
+			ID:    op.id,
+			Deps:  op.deps,
+			Op:    op.raw.Kind(),
+			Path:  path,
+			Value: value,
+		}
+
+		buffer = append(buffer, structOp)
+	}
+	return json.Marshal(buffer)
+}
+
+func (doc Doc) marshalBufferedOperations() ([]byte, error) {
+	type bufferedOperation struct {
+		ID    string      `json:"id"`
+		Op    string      `json:"op"`
+		Path  string      `json:"path"`
+		Deps  []string    `json:"deps"`
+		Value interface{} `json:"value"`
+	}
+
+	buffer := []bufferedOperation{}
+
+	for _, operation := range doc.bufferedOperations {
 		path, err := operation.raw.Path()
 		if err != nil {
 			return nil, err
@@ -174,7 +208,7 @@ func (doc Doc) MarshalFullJSON() ([]byte, error) {
 			return nil, err
 		}
 
-		opNoDeps := operationNoDeps{
+		op := bufferedOperation{
 			ID:    operation.id,
 			Deps:  operation.deps,
 			Op:    operation.raw.Kind(),
@@ -182,7 +216,7 @@ func (doc Doc) MarshalFullJSON() ([]byte, error) {
 			Value: value,
 		}
 
-		buffer = append(buffer, opNoDeps)
+		buffer = append(buffer, op)
 	}
 	return json.Marshal(buffer)
 }

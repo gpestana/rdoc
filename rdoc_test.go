@@ -12,7 +12,10 @@ import (
 // 1. end-to-end tests mapping to the examples of the JSON CRDT paper
 
 // 1.A: different value assignment of a register on multiple replicas
-func _Test_E2E_One(t *testing.T) {
+func Test_E2E_One(t *testing.T) {
+	expectedFinalDoc1 := `[{"id":"2.64487784","op":"add","path":"/key","value":"A"},{"id":"3.64487784","op":"add","path":"/key","value":"B"},{"id":"2.64553321","op":"add","path":"/key","value":"A"},{"id":"3.64553321","op":"add","path":"/key","value":"C"}]`
+	expectedFinalDoc2 := `[{"id":"2.64553321","op":"add","path":"/key","value":"A"},{"id":"3.64553321","op":"add","path":"/key","value":"C"},{"id":"2.64487784","op":"add","path":"/key","value":"A"},{"id":"3.64487784","op":"add","path":"/key","value":"B"}]`
+
 	doc1 := rdoc.Init("doc1")
 	doc2 := rdoc.Init("doc2")
 
@@ -56,13 +59,30 @@ func _Test_E2E_One(t *testing.T) {
 	// merge doc2 state into doc1
 	err = doc1.Apply(doc2PatchToApplyRemotely)
 	if err != nil {
-		t.Error(t)
+		t.Error(err)
 	}
 
 	// merge doc1 state into doc2
 	err = doc2.Apply(doc1PatchToApplyRemotely)
 	if err != nil {
-		t.Error(t)
+		t.Error(err)
+	}
+
+	// check results
+	bufferDoc1, err := json.Marshal(*doc1)
+	if err != nil {
+		t.Error(err)
+	}
+	if string(bufferDoc1) != expectedFinalDoc1 {
+		t.Error("Doc1 not correct after Apply")
+	}
+
+	bufferDoc2, err := json.Marshal(*doc2)
+	if err != nil {
+		t.Error(err)
+	}
+	if string(bufferDoc2) != expectedFinalDoc2 {
+		t.Error("Doc2 not correct after Apply")
 	}
 }
 
