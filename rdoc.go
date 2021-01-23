@@ -1,3 +1,7 @@
+// Package rdoc is a native go implementation of a conflict-free replicated
+// JSON data structure (JSON CRDT). A JSON CRDT is a data structure that
+// automatically resolves concurrent modifications such that no updates are
+// lost, and such that all replicas converge towards the same state.
 package rdoc
 
 import (
@@ -10,7 +14,8 @@ import (
 	"github.com/gpestana/rdoc/lclock"
 )
 
-// Doc represents a JSON CRDT document
+// Doc represents a JSON CRDT document; It maintains the metadata necessary to guarantee
+// that the state of the document replicas converge over time without losing data.
 type Doc struct {
 	id                 string
 	appliedIDs         *idset.Set
@@ -19,9 +24,18 @@ type Doc struct {
 	bufferedOperations map[string]Operation
 }
 
-// Init returns a new JSON CRDT document
-func Init(id string) *Doc {
+// Operation the metadata of a valid operation to perform a mutation on the
+// JSON CRDT's document state.
+type Operation struct {
+	id   string
+	deps []string
+	raw  jpatch.Operation
+}
 
+// Init initiates and returns a new JSON CRDT document. The input is a string encoding an
+// unique ID of the replica. The application logic *must* ensure that the replica IDs are
+// unique within its network
+func Init(id string) *Doc {
 	return &Doc{
 		id:                 id,
 		appliedIDs:         idset.New(),
@@ -31,7 +45,8 @@ func Init(id string) *Doc {
 	}
 }
 
-// Apply applies a valid json patch on the document
+// Apply applies a valid operation represented as a JSON patch (https://tools.ietf.org/html/rfc6902)
+// on the document. Apply handles both local and remote operations.
 func (doc *Doc) Apply(rawPatch []byte) error {
 	patch, err := jpatch.DecodePatch(rawPatch)
 	if err != nil {
@@ -41,7 +56,7 @@ func (doc *Doc) Apply(rawPatch []byte) error {
 	appliedRemoteOperations := false
 
 	for _, opRaw := range patch {
-		op, err := operationFromPatch(opRaw)
+		op, err := doc.getOperationFromPatch(opRaw)
 		if err != nil {
 			return err
 		}
@@ -93,8 +108,17 @@ func (doc *Doc) tryBufferedOperations() {
 	}
 }
 
-// MarshalJSON marshals a Doc into a buffer, excluding the deps field on each
-// operation
+// Operations returns the encoded operations applied to the document. The output
+// of this function can be sent over the wire to other replicas, in order to
+// achieve convergence.
+func (doc Doc) Operations() ([]byte, error) {
+	return doc.MarshalFullJSON()
+}
+
+// MarshalJSON marshals a Doc into a buffer, excluding the deps field of each
+// operation. The returned buffer *contains only the applied operations* that
+// mutated the document state. The buffered operations as not included in the
+// document serialization.
 func (doc Doc) MarshalJSON() ([]byte, error) {
 	type operationNoDeps struct {
 		ID    string      `json:"id"`
@@ -128,7 +152,7 @@ func (doc Doc) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalFullJSON marshals a Doc into a buffer, including the dependencies
-// field
+// field of each operation.
 func (doc Doc) MarshalFullJSON() ([]byte, error) {
 	type operationNoDeps struct {
 		ID    string      `json:"id"`
@@ -163,38 +187,45 @@ func (doc Doc) MarshalFullJSON() ([]byte, error) {
 	return json.Marshal(buffer)
 }
 
-// Operation represents the CRDT operations
-type Operation struct {
-	id   string
-	deps []string
-	raw  jpatch.Operation
-}
+func (doc *Doc) getOperationFromPatch(rawOp jpatch.Operation) (*Operation, error) {
+	var id string
+	deps := []string{}
 
-func operationFromPatch(rawOp jpatch.Operation) (*Operation, error) {
+	rawDeps := rawOp["deps"]
 	rawID := rawOp["id"]
-	if rawID == nil {
+
+	// ID is set but dependency set is not (or vice-versa) means that the remote operation
+	// is not valid
+	if rawID == nil && rawDeps != nil || rawID != nil && rawDeps == nil {
 		return nil,
-			fmt.Errorf("Operation must have an associated id, got: %v", rawID)
+			fmt.Errorf("Remote operation must have an associated id and set of dependencies")
 	}
-	id := string(*rawID)
+
+	// if id AND deps are not set, we assume it is a local operation. Thus, we should add
+	// metadata based on local replica state (id and dependencies)
+	if rawID == nil && rawDeps == nil {
+		// local operation
+		doc.clock.Tick()
+		return &Operation{
+			id:   doc.clock.String(),
+			deps: doc.appliedIDs.GetIDs(),
+			raw:  rawOp,
+		}, nil
+	}
+
+	// remote operation
+	id = string(*rawID)
 	id = strings.TrimSuffix(id, "\"")
 	id = strings.TrimPrefix(id, "\"")
 
-	rawDeps := rawOp["deps"]
-	if rawDeps == nil {
-		return nil,
-			fmt.Errorf("Operation must have an associated dependency, got: %v", rawDeps)
-	}
-
-	deps := new([]string)
-	err := json.Unmarshal(*rawDeps, deps)
+	err := json.Unmarshal(*rawDeps, &deps)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Operation{
 		id:   id,
-		deps: *deps,
+		deps: deps,
 		raw:  rawOp,
 	}, nil
 }

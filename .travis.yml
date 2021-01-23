@@ -4,5 +4,10 @@ install:
   - go get .
 
 go:
-  - master
+  - "master"
 
+before-script:
+  - "make lint"
+
+ script:
+  - "make tests"

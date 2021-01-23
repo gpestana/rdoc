@@ -1,50 +1,53 @@
 # rdoc
 
-[![Build Status](https://travis-ci.org/gpestana/rdoc.svg?branch=master)](https://travis-ci.org/gpestana/rdoc)
+[![Build Status](https://travis-ci.org/gpestana/rdoc.svg?branch=master)](https://travis-ci.org/gpestana/rdoc) [![Go Reference](https://pkg.go.dev/badge/github.com/gpestana/rdoc.svg)](https://pkg.go.dev/github.com/gpestana/rdoc) [![Package Version](https://img.shields.io/github/v/tag/gpestana/rdoc)](https://img.shields.io/github/v/tag/gpestana/rdoc)
 
-Conflict-free replicated JSON implementation in Go based on 
-[Martin Kleppmann, Alastair R. Beresford
-work](https://arxiv.org/abs/1608.03960).
+**rdoc - Build better decentralized and offline-first application in Go** 
 
-From the paper's abstract:
+rdoc is a native go implementation of a conflict-free replicated JSON data structure, as introduced by Martin Kleppmann and Alastair R. Beresford in their seminal work [1]. A JSON CRDT is "[...] an algorithm and formal semantics for a JSON data structure that automatically resolves concurrent modifications such that no updates are lost, and such that all replicas converge towards the same state (a conflict-free replicated datatype or CRDT)." [1];
 
-> [...] an algorithm and formal semantics for a JSON data structure that 
-> automatically resolves concurrent modifications such that no updates are lost,
-> and such that all replicas converge towards the same state (a conflict-free 
-> replicated datatype or CRDT). It supports arbitrarily nested list and map 
-> types, which can be modified by insertion, deletion and assignment. The 
-> algorithm performs all merging client-side and does not depend on ordering 
-> guarantees from the network, making it suitable for deployment on mobile 
-> devices with poor network connectivity, in peer-to-peer networks, and in 
-> messaging systems with end-to-end encryption.
+Do you want to learn more about the JSON CRDT data type? [This youtube video](https://www.youtube.com/watch?v=TRvQzwDyVro) is a good introduction to the original paper [1] by Martin Kleppmann and Alastair R. Beresford.
 
-## API
+## Features 
 
-At this point, `rdoc` implements a document interface for an operation-based 
-CRDT JSON data structure. To manipulate the data structure, the user creates
-operations and calls the `ApplyOperation`  structure method. 
+- Simple API; One API call allows the application logic to update and manage coverging JSON replicas in decentralized settings;  
+- Supports JSON Patch notation as defined in [RFC6902](https://tools.ietf.org/html/rfc6902);
+- Supports [cbor serialization](https://tools.ietf.org/html/rfc7049) [WIP; v1.1.0 milestone];
 
-The user interface with the expected getters and setters will sit between the
-user and document interface and it will be defined an worked on later. 
+## Examples
 
-**The user interface is not developed yet, but you can use the document
-interface which is a lower level API.** Check the [end to end tests](./e2e) to 
-see how to use the lower level API to manipulate and sync JSON CRDT documents. 
+```go
 
-Check the [internal specifications](./SPECS.md) if you are interested in
-contributing and/or understanding the implementation details and mechanics of 
-the `rdoc` data structure.
+// starts a new replicated JSON document with an unique ID (in the context of the replicas sample)
+doc := Init("doc_replica_1")
 
-## Use cases for JSON-CDRT
+// updates the document state with a JSON patch operation:
+patch := []byte(`{"op": "add", "path": "/", "value": "user"`)
+err := doc.Apply(patch)
+if err != nil {
+    panic(err)
+}
 
-A good discussion and suggestions of CRDT uses can be found in the 
-[research-CRDT repository maintained by IPFS](https://github.com/ipfs/research-CRDT/issues/1)
+// update the document state with remote operations (i.e. operations executed by a remote replica); 
+// remote operations will update the state of the document iif all its dependencies have been applied.  
+remotePath := []byte(`[
+ {"op": "add", "path": "/", "value": "user", "id":"1.380503024", "deps": [] },
+ {"op": "add", "path": "/name", "value": "Jane", "id":"2.1", "deps": ["1.1"] },
+ {"op": "add", "path": "/name", "value": "Jane", "id":"2.380503024", "deps": ["1.380503024"] }
+]`)
 
+err := doc.Apply(remotePath)
+if err != nil {
+    panic(err)
+}
 
-## Contributing
+// Native Go marshaling/unmarshaling supported 
+buffer, err := json.Marshal(*doc)
+if err != nil {
+    panic(err)
+}
+```
 
-Just go ahead and open issues, PRs and help reviewing code :)
+## References
 
-## License
-
-MIT
+1. [A Conflict-Free Replicated JSON Datatype](https://arxiv.org/abs/1608.03960) (Martin Kleppmann, Alastair R. Beresford)

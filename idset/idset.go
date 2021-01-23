@@ -1,3 +1,5 @@
+// Package idset implements a idempotent set of string IDs and helpers to use
+// in the context of `rdoc`
 package idset
 
 // Set is a set of IDs
@@ -8,6 +10,15 @@ type Set struct {
 // New returns an empty set
 func New() *Set {
 	return &Set{ids: map[string]struct{}{}}
+}
+
+// GetIDs returns a slice with all ids in the set
+func (set *Set) GetIDs() []string {
+	keys := []string{}
+	for k := range set.ids {
+		keys = append(keys, k)
+	}
+	return keys
 }
 
 // Add inserts a new id to the set
