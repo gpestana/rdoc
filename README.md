@@ -1,12 +1,18 @@
 # rdoc
 
-### Build better decentralized and offline-first application in Go
+### rdoc (Replicated DOCument): Build better decentralized and offline-first applications in Go
 
 [![Build Status](https://travis-ci.org/gpestana/rdoc.svg?branch=master)](https://travis-ci.org/gpestana/rdoc) [![Package Version](https://img.shields.io/github/v/tag/gpestana/rdoc)](https://img.shields.io/github/v/tag/gpestana/rdoc)
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/gpestana/rdoc.svg)](https://pkg.go.dev/github.com/gpestana/rdoc)
 
-rdoc is a native go implementation of a conflict-free replicated JSON data structure, as introduced by Martin Kleppmann and Alastair R. Beresford in their seminal work [1]. A JSON CRDT is "[...] an algorithm and formal semantics for a JSON data structure that automatically resolves concurrent modifications such that no updates are lost, and such that all replicas converge towards the same state (a conflict-free replicated datatype or CRDT)." [1];
+rdoc is a native go implementation of a conflict-free replicated JSON data
+structure, as introduced by Martin Kleppmann and Alastair R. Beresford in their
+seminal work [[1]](https://arxiv.org/abs/1608.03960). A JSON CRDT is "[...] an
+algorithm and formal semantics for a JSON data structure that automatically
+resolves concurrent modifications such that no updates are lost, and such that
+all replicas converge towards the same state (a conflict-free replicated
+datatype or CRDT)."  [[1]](https://arxiv.org/abs/1608.03960).
 
 Do you want to learn more about the JSON CRDT data type? [This youtube video](https://www.youtube.com/watch?v=TRvQzwDyVro) is a good introduction to the original paper [1] by Martin Kleppmann and Alastair R. Beresford.
 
@@ -43,10 +49,11 @@ if err != nil {
     panic(err)
 }
 
-// Get Doc operations to sent over the wire to merge into other replicas
+// Get Doc operations to send over the wire; these operations can be used by
+// remote replicas to converge state with `doc1`
 doc1Operations := doc.Operations()
 
-// ... apply state from doc1 into doc2, in order for replicas to converge
+// ... apply state from doc1 into doc2, in order for replicas `doc1` and `doc2` to converge
 
 doc2.Apply(doc1Operations)
 
